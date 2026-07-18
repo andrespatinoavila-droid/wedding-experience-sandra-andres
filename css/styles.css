@@ -362,23 +362,12 @@ h1 i {
   overflow: hidden;
   background: var(--ivory);
   box-shadow: 0 1rem 3rem oklch(24% 0.015 90 / 0.13);
-  cursor: zoom-in;
   touch-action: none;
   user-select: none;
 }
 
-.menu-viewer.is-zoomed {
-  cursor: grab;
-}
-
-.menu-viewer.is-zoomed:active {
-  cursor: grabbing;
-}
-
 .menu-viewer__canvas {
   width: 100%;
-  transform-origin: center center;
-  will-change: transform;
 }
 
 .official-menu {
