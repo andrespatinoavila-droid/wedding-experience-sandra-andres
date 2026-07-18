@@ -7,60 +7,278 @@ const photoViewer = document.querySelector("#menu-photo-viewer");
 const viewerContinue = document.querySelector("#viewer-continue");
 const viewerCover = document.querySelector("#viewer-cover");
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
-
-let pageFlip = null;
-let zoomGestureLocked = false;
-let previousControl = null;
-let nextControl = null;
-let stableViewportHeight = window.innerHeight;
-let viewerActive = false;
-let activeTouchCount = 0;
-let lastTouchInteraction = 0;
-let zoomRestoreTimer = null;
+const viewerSurfaces = [
+  document.querySelector("#surface-cover"),
+  document.querySelector("#surface-menu"),
+  document.querySelector("#surface-thanks"),
+];
 
 const NORMAL_SCALE_LIMIT = 1.02;
+const CONTROL_RESTORE_DELAY = 250;
+const IDLE_RECOVERY_DELAY = 2000;
+const DOUBLE_TAP_DELAY = 320;
 
-function currentViewportScale() {
-  return window.visualViewport?.scale || 1;
-}
+let pageFlip = null;
+let pageFlipInputSuspended = false;
+let previousControl = null;
+let nextControl = null;
+let viewerActive = false;
+let currentPageIndex = 0;
+let panzoom = null;
+let activeSurface = null;
+let activeSurfaceParent = null;
+let viewerScale = 1;
+let viewerPosition = { x: 0, y: 0 };
+let activePointers = new Set();
+let controlsRestoreTimer = null;
+let idleRecoveryTimer = null;
+let viewportResetTimer = null;
+let lastTap = { time: 0, surface: null };
+let suppressDoubleClickUntil = 0;
+let lastInteractionAt = Date.now();
 
 function isZoomActive() {
-  return currentViewportScale() > NORMAL_SCALE_LIMIT;
+  return viewerScale > NORMAL_SCALE_LIMIT;
 }
 
-function hideControlsForZoom() {
-  window.clearTimeout(zoomRestoreTimer);
-  if (!document.body.classList.contains("is-zoomed")) {
-    lastTouchInteraction = Date.now();
+function setAppHeight() {
+  const height = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty("--app-height", `${height}px`);
+}
+
+function suspendPageFlipInput() {
+  if (!pageFlip || pageFlipInputSuspended) return;
+  pageFlip.getUI()?.removeHandlers();
+  pageFlipInputSuspended = true;
+}
+
+function resumePageFlipInput() {
+  if (!pageFlip || !pageFlipInputSuspended) return;
+  pageFlip.getUI()?.setHandlers();
+  pageFlipInputSuspended = false;
+}
+
+function setNavigationLocked(locked) {
+  document.body.classList.toggle("is-zoomed", locked);
+  book.setAttribute("aria-disabled", String(locked || viewerActive));
+  if (locked) suspendPageFlipInput();
+  else resumePageFlipInput();
+}
+
+function showControlsAtNormalScale() {
+  if (isZoomActive() || activePointers.size > 0) return;
+  setNavigationLocked(false);
+}
+
+function scheduleControlsRestore() {
+  window.clearTimeout(controlsRestoreTimer);
+  controlsRestoreTimer = window.setTimeout(() => {
+    if (!isZoomActive() && activePointers.size === 0) {
+      showControlsAtNormalScale();
+    }
+  }, CONTROL_RESTORE_DELAY);
+}
+
+function syncScaleState(scale) {
+  viewerScale = Number.isFinite(scale) ? scale : 1;
+  document.body.dataset.viewerScale = viewerScale.toFixed(3);
+
+  if (isZoomActive()) {
+    window.clearTimeout(controlsRestoreTimer);
+    setNavigationLocked(true);
+    return;
   }
-  document.body.classList.add("is-zoomed");
-  book.setAttribute("aria-disabled", "true");
+
+  scheduleControlsRestore();
 }
 
-function restoreControlsAfterZoom() {
-  if (isZoomActive() || activeTouchCount > 0) return;
-  document.body.classList.remove("is-zoomed");
-  zoomGestureLocked = false;
-  book.setAttribute("aria-disabled", String(viewerActive));
-}
+/**
+ * Única ruta de recuperación para las tres vistas.
+ * Restablece el mismo motor, su escala, traslación, gestos y navegación.
+ */
+function resetViewerState({ animate = false } = {}) {
+  window.clearTimeout(controlsRestoreTimer);
+  window.clearTimeout(idleRecoveryTimer);
+  activePointers.clear();
+  lastTap = { time: 0, surface: null };
 
-function scheduleZoomRecovery(delay = 250) {
-  window.clearTimeout(zoomRestoreTimer);
-  zoomRestoreTimer = window.setTimeout(restoreControlsAfterZoom, delay);
-}
-
-function syncViewportState() {
-  const zoomActive = viewerActive && isZoomActive();
-  if (zoomActive) {
-    hideControlsForZoom();
-  } else {
-    scheduleZoomRecovery();
+  if (panzoom) {
+    panzoom.reset({ animate });
   }
 
-  if (!zoomActive) {
-    stableViewportHeight = window.visualViewport?.height || window.innerHeight;
-    document.documentElement.style.setProperty("--app-height", `${stableViewportHeight}px`);
+  viewerScale = 1;
+  viewerPosition = { x: 0, y: 0 };
+  setNavigationLocked(false);
+  scheduleControlsRestore();
+}
+
+function registerIdleRecovery() {
+  window.clearTimeout(idleRecoveryTimer);
+  idleRecoveryTimer = window.setTimeout(() => {
+    const idleFor = Date.now() - lastInteractionAt;
+    if (idleFor >= IDLE_RECOVERY_DELAY && viewerScale <= NORMAL_SCALE_LIMIT) {
+      resetViewerState({ animate: false });
+    }
+  }, IDLE_RECOVERY_DELAY + 80);
+}
+
+function noteInteraction() {
+  lastInteractionAt = Date.now();
+  registerIdleRecovery();
+}
+
+function handlePanzoomChange(event) {
+  viewerPosition = {
+    x: Number(event.detail?.x) || 0,
+    y: Number(event.detail?.y) || 0,
+  };
+  syncScaleState(Number(event.detail?.scale) || 1);
+  noteInteraction();
+}
+
+function handlePanzoomStart() {
+  noteInteraction();
+}
+
+function handlePanzoomEnd() {
+  noteInteraction();
+  if (!isZoomActive()) scheduleControlsRestore();
+}
+
+function removeActiveViewerListeners() {
+  if (!activeSurface) return;
+  activeSurface.removeEventListener("panzoomchange", handlePanzoomChange);
+  activeSurface.removeEventListener("panzoomstart", handlePanzoomStart);
+  activeSurface.removeEventListener("panzoomend", handlePanzoomEnd);
+}
+
+function toggleViewerZoom(event) {
+  if (!panzoom) return;
+
+  if (isZoomActive()) {
+    resetViewerState({ animate: true });
+    return;
   }
+
+  panzoom.zoom(2, { animate: true });
+}
+
+function activateViewerEngine(pageIndex) {
+  const surface = viewerSurfaces[pageIndex];
+  if (!surface || typeof window.Panzoom !== "function") {
+    throw new Error("El visor Panzoom no está disponible.");
+  }
+
+  resetViewerState({ animate: false });
+  removeActiveViewerListeners();
+  panzoom?.destroy();
+
+  activeSurface = surface;
+  activeSurfaceParent = surface.parentElement;
+  document.body.dataset.viewerEnginePage = String(pageIndex);
+  panzoom = window.Panzoom(surface, {
+    startScale: 1,
+    minScale: 1,
+    maxScale: 5,
+    step: 0.35,
+    pinchAndPan: true,
+    panOnlyWhenZoomed: true,
+    animate: true,
+    duration: 220,
+    easing: "ease-out",
+    cursor: "default",
+  });
+
+  activeSurface.addEventListener("panzoomchange", handlePanzoomChange);
+  activeSurface.addEventListener("panzoomstart", handlePanzoomStart);
+  activeSurface.addEventListener("panzoomend", handlePanzoomEnd);
+
+  activeSurfaceParent.style.touchAction = "none";
+  resetViewerState({ animate: false });
+  window.__weddingViewer = {
+    get instance() {
+      return panzoom;
+    },
+    get page() {
+      return currentPageIndex;
+    },
+    get scale() {
+      return viewerScale;
+    },
+    get position() {
+      return { ...viewerPosition };
+    },
+    resetViewerState,
+  };
+}
+
+function initializeSurfaceGestures() {
+  viewerSurfaces.forEach((surface) => {
+    surface.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (surface !== activeSurface) return;
+        activePointers.add(event.pointerId);
+        noteInteraction();
+      },
+      { capture: true }
+    );
+
+    surface.addEventListener(
+      "pointermove",
+      (event) => {
+        if (surface !== activeSurface) return;
+        noteInteraction();
+      },
+      { capture: true }
+    );
+
+    surface.addEventListener(
+      "pointerup",
+      (event) => {
+        if (surface !== activeSurface) return;
+        activePointers.delete(event.pointerId);
+        noteInteraction();
+
+        if (event.pointerType === "touch") {
+          const now = Date.now();
+          if (
+            lastTap.surface === surface &&
+            now - lastTap.time <= DOUBLE_TAP_DELAY
+          ) {
+            event.preventDefault();
+            event.stopPropagation();
+            lastTap = { time: 0, surface: null };
+            suppressDoubleClickUntil = now + 500;
+            toggleViewerZoom(event);
+          } else {
+            lastTap = { time: now, surface };
+          }
+        }
+
+        if (!isZoomActive()) scheduleControlsRestore();
+      },
+      { capture: true }
+    );
+
+    surface.addEventListener(
+      "pointercancel",
+      (event) => {
+        if (surface !== activeSurface) return;
+        event.stopPropagation();
+        resetViewerState({ animate: false });
+      },
+      { capture: true }
+    );
+
+    surface.addEventListener("dblclick", (event) => {
+      if (surface !== activeSurface) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (Date.now() < suppressDoubleClickUntil) return;
+      toggleViewerZoom(event);
+    });
+  });
 }
 
 function setViewerActive(active) {
@@ -69,7 +287,7 @@ function setViewerActive(active) {
   photoViewer.hidden = !active;
   photoViewer.setAttribute("aria-hidden", String(!active));
   book.setAttribute("aria-hidden", String(active));
-  book.setAttribute("aria-disabled", String(active || (viewerActive && isZoomActive())));
+  book.setAttribute("aria-disabled", String(active || isZoomActive()));
 
   if (active) {
     window.setTimeout(() => viewerContinue.focus({ preventScroll: true }), 60);
@@ -93,23 +311,30 @@ function preparePages() {
 }
 
 function updatePageStatus(pageIndex) {
-  const safeIndex = Math.max(0, Math.min(pageNames.length - 1, Number(pageIndex) || 0));
+  const safeIndex = Math.max(
+    0,
+    Math.min(pageNames.length - 1, Number(pageIndex) || 0)
+  );
+
+  currentPageIndex = safeIndex;
   pageStatus.textContent = pageNames[safeIndex];
   book.dataset.currentPage = String(safeIndex);
   document.body.dataset.currentPage = String(safeIndex);
+
   if (previousControl) {
     previousControl.hidden = safeIndex === 0 || safeIndex === 1;
     previousControl.querySelector("span").textContent =
       safeIndex === 2 ? "Regresar" : "Portada";
   }
+
   if (nextControl) {
     nextControl.hidden = safeIndex !== 0;
     nextControl.querySelector("span").textContent =
       safeIndex === 0 ? "Ver menú" : "Continuar";
   }
 
-  if (safeIndex === 1) setViewerActive(true);
-  if (safeIndex !== 1 && viewerActive) setViewerActive(false);
+  setViewerActive(safeIndex === 1);
+  window.requestAnimationFrame(() => activateViewerEngine(safeIndex));
 }
 
 function initializeControls() {
@@ -122,6 +347,7 @@ function initializeControls() {
     event.preventDefault();
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
+    resetViewerState({ animate: false });
     pageFlip.flipNext("bottom");
   });
   document.body.append(nextControl);
@@ -136,6 +362,7 @@ function initializeControls() {
     event.preventDefault();
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
+    resetViewerState({ animate: false });
     pageFlip.turnToPrevPage();
   });
   document.body.append(previousControl);
@@ -144,6 +371,7 @@ function initializeControls() {
     event.preventDefault();
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
+    resetViewerState({ animate: false });
     setViewerActive(false);
     window.requestAnimationFrame(() => pageFlip.flipNext("bottom"));
   });
@@ -153,6 +381,7 @@ function initializeControls() {
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
 
+    resetViewerState({ animate: false });
     document.body.classList.add("viewer-returning");
     window.setTimeout(() => {
       document.body.classList.remove("viewer-returning");
@@ -163,69 +392,10 @@ function initializeControls() {
 
   document.querySelector(".skip-link")?.addEventListener("click", (event) => {
     event.preventDefault();
-    pageFlip?.flip(1, "bottom");
+    if (!pageFlip || isZoomActive()) return;
+    resetViewerState({ animate: false });
+    pageFlip.flip(1, "bottom");
   });
-}
-
-function initializeZoomGestureIsolation() {
-  const shouldLockZoomGesture = (event) =>
-    event.touches?.length > 1 || isZoomActive();
-
-  document
-    .querySelectorAll("#menu-viewer")
-    .forEach((surface) => {
-      surface.addEventListener(
-        "touchstart",
-        (event) => {
-          activeTouchCount = event.touches.length;
-          lastTouchInteraction = Date.now();
-          if (shouldLockZoomGesture(event)) {
-            zoomGestureLocked = true;
-            hideControlsForZoom();
-            event.stopPropagation();
-          }
-        },
-        { capture: true, passive: true }
-      );
-
-      surface.addEventListener(
-        "touchmove",
-        (event) => {
-          activeTouchCount = event.touches.length;
-          lastTouchInteraction = Date.now();
-          if (zoomGestureLocked || shouldLockZoomGesture(event)) {
-            zoomGestureLocked = true;
-            event.stopPropagation();
-          }
-        },
-        { capture: true, passive: true }
-      );
-
-      surface.addEventListener(
-        "touchend",
-        (event) => {
-          activeTouchCount = event.touches.length;
-          lastTouchInteraction = Date.now();
-          if (!zoomGestureLocked) return;
-          event.stopPropagation();
-          if (event.touches.length === 0) {
-            scheduleZoomRecovery();
-          }
-        },
-        { capture: true, passive: true }
-      );
-
-      surface.addEventListener(
-        "touchcancel",
-        (event) => {
-          activeTouchCount = 0;
-          lastTouchInteraction = Date.now();
-          if (zoomGestureLocked) event.stopPropagation();
-          scheduleZoomRecovery();
-        },
-        { capture: true, passive: true }
-      );
-    });
 }
 
 function initializePageFlip() {
@@ -266,23 +436,29 @@ function initializePageFlip() {
   window.__weddingPageFlip = pageFlip;
 
   initializeControls();
-  initializeZoomGestureIsolation();
+  initializeSurfaceGestures();
   updatePageStatus(0);
 }
 
-syncViewportState();
-window.addEventListener("resize", syncViewportState, { passive: true });
-window.visualViewport?.addEventListener("resize", syncViewportState, { passive: true });
-window.visualViewport?.addEventListener("scroll", syncViewportState, { passive: true });
-window.setInterval(() => {
-  const idleFor = Date.now() - lastTouchInteraction;
-  if (
-    document.body.classList.contains("is-zoomed") &&
-    !isZoomActive() &&
-    activeTouchCount === 0 &&
-    idleFor >= 2000
-  ) {
-    restoreControlsAfterZoom();
-  }
-}, 500);
+function handleViewportChange() {
+  setAppHeight();
+  window.clearTimeout(viewportResetTimer);
+  viewportResetTimer = window.setTimeout(() => {
+    resetViewerState({ animate: false });
+  }, 120);
+}
+
+setAppHeight();
+window.addEventListener("orientationchange", handleViewportChange, {
+  passive: true,
+});
+window.addEventListener("resize", handleViewportChange, { passive: true });
+window.visualViewport?.addEventListener("resize", handleViewportChange, {
+  passive: true,
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) resetViewerState({ animate: false });
+});
+
 initializePageFlip();
