@@ -3,7 +3,7 @@
   display: block;
   box-sizing: border-box;
   transform: translateZ(0);
-  touch-action: pan-y;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .stf__wrapper {
@@ -39,7 +39,7 @@
 .book.stf__parent {
   width: 100% !important;
   max-width: 32.5rem !important;
-  height: 100svh;
+  height: var(--app-height, 100dvh);
   min-height: 0 !important;
   margin: 0 auto;
   perspective: none;
@@ -48,11 +48,11 @@
 .book .stf__wrapper {
   position: absolute;
   inset: 0;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .book .stf__block {
-  overflow: visible;
+  overflow: hidden;
 }
 
 .book-page.stf__item {
@@ -152,5 +152,34 @@ body[data-current-page="2"] .global-page-previous {
 @media (min-width: 48rem) {
   .book.stf__parent {
     max-width: 38rem !important;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .book-page.stf__item {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .book-page.stf__item > .page-content {
+    max-height: calc(var(--app-height, 100dvh) - 1rem);
+  }
+
+  .book-page.stf__item.welcome > .welcome__content {
+    width: min(100%, 23rem);
+  }
+
+  .book-page.stf__item.menu-page > .menu-viewer {
+    width: min(
+      calc(100vw - 1rem),
+      calc((var(--app-height, 100dvh) - 1rem) * 0.6667)
+    );
+    max-height: calc(var(--app-height, 100dvh) - 1rem);
+  }
+
+  .book-page.stf__item.thanks > .thanks__content {
+    width: min(calc(100% - 2rem), 23rem);
   }
 }

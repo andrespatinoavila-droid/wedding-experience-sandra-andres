@@ -1,12 +1,72 @@
 /* Celular: conserva los controles aprobados y la esquina de avance. */
 @media (max-width: 47.99rem) {
+  html,
+  body {
+    position: fixed;
+    inset: 0;
+    height: var(--app-height, 100dvh);
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   .book {
+    width: 100vw;
+    height: var(--app-height, 100dvh);
+    min-height: 0;
+    overflow: hidden;
     perspective: 1100px;
   }
 
+  .book-page {
+    height: 100%;
+    min-height: 0;
+    padding: clamp(0.7rem, 2.4vh, 1.35rem) 1rem;
+    overflow: hidden;
+  }
+
+  .welcome__content {
+    transform: none;
+  }
+
+  .kicker {
+    margin-bottom: clamp(0.45rem, 1.5vh, 0.85rem);
+    font-size: clamp(0.52rem, 1.5vh, 0.66rem);
+  }
+
+  .monogram {
+    margin-bottom: clamp(0.4rem, 1.3vh, 0.75rem);
+    font-size: clamp(2.75rem, 9vh, 4.3rem);
+  }
+
+  h1 {
+    margin-bottom: clamp(0.2rem, 0.7vh, 0.45rem);
+    font-size: clamp(1.35rem, 4.2vh, 1.85rem);
+    line-height: 1.12;
+  }
+
+  .date {
+    margin-bottom: clamp(0.45rem, 1.35vh, 0.85rem);
+    font-size: clamp(0.52rem, 1.45vh, 0.63rem);
+  }
+
+  .ornament {
+    margin-bottom: clamp(0.55rem, 1.6vh, 0.95rem);
+  }
+
+  .welcome__message {
+    font-size: clamp(0.82rem, 2.15vh, 1.02rem);
+    line-height: 1.32;
+  }
+
+  .welcome__message br + br {
+    display: block;
+    content: "";
+    margin-top: clamp(0.35rem, 1vh, 0.7rem);
+  }
+
   .menu-page {
-    padding-right: 1.1rem;
-    padding-left: 1.1rem;
+    padding: 0.5rem;
   }
 
   .page-control--next {
@@ -82,6 +142,30 @@
 
   .page-control--previous.page-control--light {
     background: oklch(30% 0.04 135 / 0.72);
+  }
+
+  .thanks__content {
+    transform: none;
+  }
+
+  .thanks .ornament {
+    margin-bottom: clamp(0.75rem, 2vh, 1.4rem);
+  }
+
+  .thanks h2 {
+    margin-bottom: clamp(0.55rem, 1.5vh, 0.9rem);
+    font-size: clamp(3rem, 10vh, 4.35rem);
+  }
+
+  .thanks__message {
+    margin-bottom: clamp(1rem, 3vh, 2rem);
+    font-size: clamp(0.88rem, 2.3vh, 1rem);
+    line-height: 1.48;
+  }
+
+  .thanks__names,
+  .thanks__date {
+    font-size: clamp(0.58rem, 1.65vh, 0.7rem);
   }
 }
 

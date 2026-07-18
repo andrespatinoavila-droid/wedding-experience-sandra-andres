@@ -9,6 +9,11 @@ let pageFlip = null;
 let menuGestureLocked = false;
 let previousControl = null;
 
+function syncViewportHeight() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty("--app-height", `${viewportHeight}px`);
+}
+
 function preparePages() {
   pages.forEach((page) => {
     page.classList.remove(
@@ -153,4 +158,7 @@ function initializePageFlip() {
   updatePageStatus(0);
 }
 
+syncViewportHeight();
+window.addEventListener("resize", syncViewportHeight, { passive: true });
+window.visualViewport?.addEventListener("resize", syncViewportHeight, { passive: true });
 initializePageFlip();
