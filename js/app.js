@@ -3,135 +3,154 @@
 const book = document.querySelector("#wedding-book");
 const pages = [...document.querySelectorAll(".book-page")];
 const pageStatus = document.querySelector("#page-status");
-
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
-const pageTurnDuration = 900;
-let currentPage = 0;
-let isTurning = false;
-let gestureStart = null;
 
-function setPageAccessibility(page, isActive) {
-  page.setAttribute("aria-hidden", String(!isActive));
-  if (isActive) {
+let pageFlip = null;
+let menuGestureLocked = false;
+let previousControl = null;
+
+function preparePages() {
+  pages.forEach((page) => {
+    page.classList.remove(
+      "is-active",
+      "is-previous",
+      "is-next",
+      "is-turning",
+      "is-turning-forward",
+      "is-turning-backward"
+    );
     page.removeAttribute("inert");
-  } else {
-    page.setAttribute("inert", "");
+    page.setAttribute("aria-hidden", "false");
+    page.dataset.density = "soft";
+  });
+}
+
+function updatePageStatus(pageIndex) {
+  const safeIndex = Math.max(0, Math.min(pageNames.length - 1, Number(pageIndex) || 0));
+  pageStatus.textContent = pageNames[safeIndex];
+  book.dataset.currentPage = String(safeIndex);
+  document.body.dataset.currentPage = String(safeIndex);
+  if (previousControl) {
+    previousControl.hidden = safeIndex === 0;
+    previousControl.querySelector("span").textContent =
+      safeIndex === 2 ? "Regresar" : "Portada";
   }
 }
 
-function renderPages() {
-  pages.forEach((page, index) => {
-    page.classList.toggle("is-active", index === currentPage);
-    page.classList.toggle("is-previous", index < currentPage);
-    page.classList.toggle("is-next", index > currentPage);
-    setPageAccessibility(page, index === currentPage);
+function initializeControls() {
+  previousControl = document.createElement("button");
+  previousControl.className = "global-page-previous";
+  previousControl.type = "button";
+  previousControl.hidden = true;
+  previousControl.setAttribute("aria-label", "Regresar a la página anterior");
+  previousControl.innerHTML = '<i aria-hidden="true">←</i><span>Portada</span>';
+  previousControl.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!pageFlip) return;
+    pageFlip.turnToPrevPage();
   });
-
-  pageStatus.textContent = pageNames[currentPage];
-}
-
-function pageFace(sourcePage, side) {
-  const face = document.createElement("div");
-  const visualClasses = [...sourcePage.classList].filter(
-    (className) => !className.startsWith("is-") && className !== "book-page"
-  );
-  face.className = `page-leaf__face page-leaf__${side} ${visualClasses.join(" ")}`;
-  face.innerHTML = sourcePage.innerHTML;
-  face.setAttribute("aria-hidden", "true");
-  face.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
-  face.querySelectorAll("button, a").forEach((element) => element.setAttribute("tabindex", "-1"));
-  return face;
-}
-
-function createTurningLeaf(fromPage, toPage, direction) {
-  const leaf = document.createElement("div");
-  leaf.className = `page-leaf is-leaf-${direction}`;
-
-  if (direction === "forward") {
-    leaf.append(pageFace(fromPage, "front"), pageFace(toPage, "back"));
-  } else {
-    leaf.append(pageFace(toPage, "front"), pageFace(fromPage, "back"));
-  }
-
-  book.append(leaf);
-  return leaf;
-}
-
-function goToPage(targetPage) {
-  if (isTurning || targetPage < 0 || targetPage >= pages.length || targetPage === currentPage) return;
-
-  const leavingPage = pages[currentPage];
-  const destinationPage = pages[targetPage];
-  const turnDirection = targetPage > currentPage ? "forward" : "backward";
-  const turningLeaf = createTurningLeaf(leavingPage, destinationPage, turnDirection);
-  isTurning = true;
-  currentPage = targetPage;
-  renderPages();
-
-  window.setTimeout(() => {
-    turningLeaf.remove();
-    isTurning = false;
-    pages[currentPage].querySelector(".page-control")?.focus({ preventScroll: true });
-  }, window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? 280
-    : pageTurnDuration);
-}
-
-function initializeNavigation() {
-  book.addEventListener("click", (event) => {
-    const control = event.target.closest("[data-action]");
-    if (control) {
-      goToPage(currentPage + (control.dataset.action === "next" ? 1 : -1));
-      return;
-    }
-
-    const position = event.clientX / window.innerWidth;
-    if (position >= 0.88) goToPage(currentPage + 1);
-    if (position <= 0.12) goToPage(currentPage - 1);
-  });
-
-  book.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "mouse") return;
-    if (!event.isPrimary) {
-      gestureStart = null;
-      return;
-    }
-    gestureStart = { x: event.clientX, y: event.clientY };
-  });
-
-  book.addEventListener("pointercancel", () => {
-    gestureStart = null;
-  });
-
-  book.addEventListener("pointerup", (event) => {
-    if (!gestureStart) {
-      gestureStart = null;
-      return;
-    }
-
-    const deltaX = event.clientX - gestureStart.x;
-    const deltaY = event.clientY - gestureStart.y;
-    gestureStart = null;
-
-    if (Math.abs(deltaX) < 55 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
-    goToPage(currentPage + (deltaX < 0 ? 1 : -1));
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowRight" || event.key === "PageDown") {
-      event.preventDefault();
-      goToPage(currentPage + 1);
-    } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
-      event.preventDefault();
-      goToPage(currentPage - 1);
-    }
-  });
+  document.body.append(previousControl);
 
   document.querySelector(".skip-link")?.addEventListener("click", (event) => {
     event.preventDefault();
-    goToPage(1);
+    pageFlip?.flip(1, "bottom");
   });
 }
 
-renderPages();
-initializeNavigation();
+function initializeMenuGestureIsolation() {
+  const menuViewer = document.querySelector("#menu-viewer");
+  if (!menuViewer) return;
+
+  const shouldLockMenuGesture = (event) =>
+    event.touches?.length > 1 || (window.visualViewport?.scale || 1) > 1.01;
+
+  menuViewer.addEventListener(
+    "touchstart",
+    (event) => {
+      if (shouldLockMenuGesture(event)) {
+        menuGestureLocked = true;
+        event.stopPropagation();
+      }
+    },
+    { capture: true, passive: true }
+  );
+
+  menuViewer.addEventListener(
+    "touchmove",
+    (event) => {
+      if (menuGestureLocked || shouldLockMenuGesture(event)) {
+        menuGestureLocked = true;
+        event.stopPropagation();
+      }
+    },
+    { capture: true, passive: true }
+  );
+
+  menuViewer.addEventListener(
+    "touchend",
+    (event) => {
+      if (!menuGestureLocked) return;
+      event.stopPropagation();
+      if (event.touches.length === 0) {
+        window.setTimeout(() => {
+          menuGestureLocked = false;
+        }, 80);
+      }
+    },
+    { capture: true, passive: true }
+  );
+
+  menuViewer.addEventListener(
+    "touchcancel",
+    (event) => {
+      if (menuGestureLocked) event.stopPropagation();
+      menuGestureLocked = false;
+    },
+    { capture: true, passive: true }
+  );
+}
+
+function initializePageFlip() {
+  if (!window.St?.PageFlip) {
+    document.documentElement.classList.add("pageflip-unavailable");
+    throw new Error("StPageFlip no está disponible.");
+  }
+
+  preparePages();
+
+  pageFlip = new window.St.PageFlip(book, {
+    width: 390,
+    height: 844,
+    size: "stretch",
+    minWidth: 280,
+    maxWidth: 520,
+    minHeight: 605,
+    maxHeight: 1125,
+    startPage: 0,
+    drawShadow: true,
+    flippingTime: 1100,
+    usePortrait: true,
+    startZIndex: 10,
+    autoSize: true,
+    maxShadowOpacity: 0.34,
+    showCover: false,
+    mobileScrollSupport: true,
+    swipeDistance: 32,
+    clickEventForward: true,
+    useMouseEvents: true,
+    showPageCorners: true,
+    disableFlipByClick: true,
+  });
+
+  pageFlip.on("init", (event) => updatePageStatus(event.data.page));
+  pageFlip.on("flip", (event) => updatePageStatus(event.data));
+  pageFlip.loadFromHTML(pages);
+  window.__weddingPageFlip = pageFlip;
+
+  initializeControls();
+  initializeMenuGestureIsolation();
+  updatePageStatus(0);
+}
+
+initializePageFlip();
