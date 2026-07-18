@@ -5,8 +5,7 @@ const pages = [...document.querySelectorAll(".book-page")];
 const pageStatus = document.querySelector("#page-status");
 
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
-const desktopTurnDuration = 780;
-const mobileTurnDuration = 1200;
+const pageTurnDuration = 900;
 let currentPage = 0;
 let isTurning = false;
 let gestureStart = null;
@@ -31,25 +30,51 @@ function renderPages() {
   pageStatus.textContent = pageNames[currentPage];
 }
 
+function pageFace(sourcePage, side) {
+  const face = document.createElement("div");
+  const visualClasses = [...sourcePage.classList].filter(
+    (className) => !className.startsWith("is-") && className !== "book-page"
+  );
+  face.className = `page-leaf__face page-leaf__${side} ${visualClasses.join(" ")}`;
+  face.innerHTML = sourcePage.innerHTML;
+  face.setAttribute("aria-hidden", "true");
+  face.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+  face.querySelectorAll("button, a").forEach((element) => element.setAttribute("tabindex", "-1"));
+  return face;
+}
+
+function createTurningLeaf(fromPage, toPage, direction) {
+  const leaf = document.createElement("div");
+  leaf.className = `page-leaf is-leaf-${direction}`;
+
+  if (direction === "forward") {
+    leaf.append(pageFace(fromPage, "front"), pageFace(toPage, "back"));
+  } else {
+    leaf.append(pageFace(toPage, "front"), pageFace(fromPage, "back"));
+  }
+
+  book.append(leaf);
+  return leaf;
+}
+
 function goToPage(targetPage) {
   if (isTurning || targetPage < 0 || targetPage >= pages.length || targetPage === currentPage) return;
 
   const leavingPage = pages[currentPage];
+  const destinationPage = pages[targetPage];
   const turnDirection = targetPage > currentPage ? "forward" : "backward";
+  const turningLeaf = createTurningLeaf(leavingPage, destinationPage, turnDirection);
   isTurning = true;
-  leavingPage.classList.add("is-turning", `is-turning-${turnDirection}`);
   currentPage = targetPage;
   renderPages();
 
   window.setTimeout(() => {
-    leavingPage.classList.remove("is-turning", `is-turning-${turnDirection}`);
+    turningLeaf.remove();
     isTurning = false;
     pages[currentPage].querySelector(".page-control")?.focus({ preventScroll: true });
   }, window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? 230
-    : window.matchMedia("(max-width: 47.99rem)").matches
-      ? mobileTurnDuration
-      : desktopTurnDuration);
+    ? 280
+    : pageTurnDuration);
 }
 
 function initializeNavigation() {

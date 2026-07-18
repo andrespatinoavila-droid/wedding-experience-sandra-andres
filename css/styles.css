@@ -10,7 +10,7 @@
   --line: oklch(42% 0.045 135 / 0.15);
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans: "Karla", Arial, sans-serif;
-  --page-turn: 780ms cubic-bezier(0.65, 0, 0.2, 1);
+  --page-turn: 900ms cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
 * {
@@ -85,27 +85,7 @@ button {
   justify-content: center;
   overflow: hidden;
   padding: 3.5rem 1.75rem;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform-origin: left center;
-  transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
-  transition:
-    transform var(--page-turn),
-    opacity 380ms ease,
-    visibility 0s linear 780ms;
-  will-change: transform, opacity;
-}
-
-.book-page::after {
-  position: absolute;
-  z-index: 8;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 54%, oklch(20% 0.02 90 / 0.24));
-  content: "";
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--page-turn);
+  transition: none;
 }
 
 .book-page.is-active {
@@ -117,38 +97,160 @@ button {
 }
 
 .book-page.is-previous {
-  z-index: 7;
+  z-index: 3;
   visibility: hidden;
-  opacity: 0.72;
-  transform: translateX(-2%) rotateY(-100deg);
+  opacity: 1;
+  transform: none;
   pointer-events: none;
-}
-
-.book-page.is-previous::after {
-  opacity: 0.9;
 }
 
 .book-page.is-next {
   z-index: 3;
   visibility: hidden;
-  opacity: 0;
-  transform: translateX(4%) rotateY(3deg);
+  opacity: 1;
+  transform: none;
   pointer-events: none;
-}
-
-.book-page.is-turning {
-  z-index: 9;
 }
 
 .page-content {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 520ms ease 180ms, transform 620ms ease 150ms;
 }
 
-.book-page:not(.is-active) .page-content {
+/* Hoja temporal de dos caras: mantiene continuidad entre ambas páginas. */
+.page-leaf {
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  pointer-events: none;
+  will-change: transform, border-radius, filter;
+}
+
+.page-leaf__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 3.5rem 1.75rem;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.page-leaf__back {
+  transform: rotateY(180deg);
+}
+
+.page-leaf__back::before {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  background: linear-gradient(90deg, oklch(25% 0.02 90 / 0.2), transparent 38%, oklch(100% 0 0 / 0.12));
+  content: "";
+  pointer-events: none;
+}
+
+.page-leaf::after {
+  position: absolute;
+  z-index: 50;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 100% 100%, oklch(100% 0 0 / 0.32), transparent 22%),
+    linear-gradient(90deg, transparent 48%, oklch(15% 0.02 90 / 0.34) 100%);
+  content: "";
   opacity: 0;
-  transform: translateY(0.5rem);
+  pointer-events: none;
+  backface-visibility: hidden;
+}
+
+.page-leaf.is-leaf-forward {
+  animation: leaf-forward var(--page-turn) both;
+}
+
+.page-leaf.is-leaf-forward::after {
+  animation: leaf-shadow var(--page-turn) both;
+}
+
+.page-leaf.is-leaf-backward {
+  animation: leaf-backward var(--page-turn) both;
+}
+
+.page-leaf.is-leaf-backward::after {
+  animation: leaf-shadow-reverse var(--page-turn) both;
+}
+
+@keyframes leaf-forward {
+  0% {
+    border-radius: 0;
+    filter: drop-shadow(0 0 0 transparent);
+    transform: translate3d(0, 0, 0) rotateY(0deg) rotateZ(0deg) skewY(0deg) scaleX(1);
+  }
+  18% {
+    border-radius: 0 0 12% 0;
+    filter: drop-shadow(0.8rem 0.5rem 0.8rem oklch(15% 0.02 90 / 0.2));
+    transform: translate3d(-0.5%, -0.2%, 34px) rotateY(-20deg) rotateZ(-0.35deg) skewY(-0.8deg) scaleX(0.992);
+  }
+  52% {
+    border-radius: 0 7% 16% 0;
+    filter: drop-shadow(2rem 0.7rem 1.5rem oklch(15% 0.02 90 / 0.34));
+    transform: translate3d(-3%, -0.5%, 82px) rotateY(-91deg) rotateZ(-1.2deg) skewY(-2.2deg) scaleX(0.94);
+  }
+  80% {
+    border-radius: 7% 0 0 10%;
+    filter: drop-shadow(1rem 0.35rem 1rem oklch(15% 0.02 90 / 0.22));
+    transform: translate3d(-1%, -0.2%, 36px) rotateY(-157deg) rotateZ(-0.45deg) skewY(-0.7deg) scaleX(0.988);
+  }
+  100% {
+    border-radius: 0;
+    filter: drop-shadow(0 0 0 transparent);
+    transform: translate3d(0, 0, 0) rotateY(-180deg) rotateZ(0deg) skewY(0deg) scaleX(1);
+  }
+}
+
+@keyframes leaf-backward {
+  0% {
+    border-radius: 0;
+    filter: drop-shadow(0 0 0 transparent);
+    transform: translate3d(0, 0, 0) rotateY(-180deg) rotateZ(0deg) skewY(0deg) scaleX(1);
+  }
+  20% {
+    border-radius: 7% 0 0 10%;
+    filter: drop-shadow(1rem 0.35rem 1rem oklch(15% 0.02 90 / 0.22));
+    transform: translate3d(-1%, -0.2%, 36px) rotateY(-157deg) rotateZ(-0.45deg) skewY(-0.7deg) scaleX(0.988);
+  }
+  48% {
+    border-radius: 0 7% 16% 0;
+    filter: drop-shadow(2rem 0.7rem 1.5rem oklch(15% 0.02 90 / 0.34));
+    transform: translate3d(-3%, -0.5%, 82px) rotateY(-91deg) rotateZ(-1.2deg) skewY(-2.2deg) scaleX(0.94);
+  }
+  82% {
+    border-radius: 0 0 12% 0;
+    filter: drop-shadow(0.8rem 0.5rem 0.8rem oklch(15% 0.02 90 / 0.2));
+    transform: translate3d(-0.5%, -0.2%, 34px) rotateY(-20deg) rotateZ(-0.35deg) skewY(-0.8deg) scaleX(0.992);
+  }
+  100% {
+    border-radius: 0;
+    filter: drop-shadow(0 0 0 transparent);
+    transform: translate3d(0, 0, 0) rotateY(0deg) rotateZ(0deg) skewY(0deg) scaleX(1);
+  }
+}
+
+@keyframes leaf-shadow {
+  0%, 100% { opacity: 0; }
+  18% { opacity: 0.4; }
+  48% { opacity: 0.92; }
+  72% { opacity: 0.46; }
+}
+
+@keyframes leaf-shadow-reverse {
+  0%, 100% { opacity: 0; }
+  28% { opacity: 0.46; }
+  52% { opacity: 0.92; }
+  82% { opacity: 0.4; }
 }
 
 .welcome {
@@ -440,33 +542,50 @@ h1 i {
     perspective: none;
   }
 
-  .book-page.is-previous {
-    transform: translateX(-100%);
+  .page-leaf.is-leaf-forward {
+    animation-name: leaf-forward-simple;
   }
 
-  .book-page.is-next {
-    transform: translateX(100%);
+  .page-leaf.is-leaf-backward {
+    animation-name: leaf-backward-simple;
   }
 }
 
+@keyframes leaf-forward-simple {
+  from { transform: translateX(0) skewY(0deg); filter: drop-shadow(0 0 transparent); }
+  50% { transform: translateX(-52%) skewY(-2deg); filter: drop-shadow(1.5rem 0 1rem oklch(15% 0.02 90 / 0.3)); }
+  to { transform: translateX(-105%) skewY(0deg); filter: drop-shadow(0 0 transparent); }
+}
+
+@keyframes leaf-backward-simple {
+  from { transform: translateX(-105%) skewY(0deg); filter: drop-shadow(0 0 transparent); }
+  50% { transform: translateX(-52%) skewY(-2deg); filter: drop-shadow(1.5rem 0 1rem oklch(15% 0.02 90 / 0.3)); }
+  to { transform: translateX(0) skewY(0deg); filter: drop-shadow(0 0 transparent); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .book-page {
-    transition: opacity 220ms ease, visibility 0s linear 220ms;
-    transform: none !important;
+  .page-leaf.is-leaf-forward {
+    animation-duration: 260ms;
+    animation-name: reduced-page-turn-forward;
   }
 
-  .book-page.is-previous,
-  .book-page.is-next {
-    opacity: 0;
-  }
-
-  .page-content {
-    transition: opacity 220ms ease;
-    transform: none !important;
+  .page-leaf.is-leaf-backward {
+    animation-duration: 260ms;
+    animation-name: reduced-page-turn-backward;
   }
 
   .page-control--hint {
     animation: none;
     opacity: 1;
   }
+}
+
+@keyframes reduced-page-turn-forward {
+  from { transform: translateX(0) skewY(0deg); }
+  to { transform: translateX(-102%) skewY(-1deg); }
+}
+
+@keyframes reduced-page-turn-backward {
+  from { transform: translateX(-102%) skewY(-1deg); }
+  to { transform: translateX(0) skewY(0deg); }
 }

@@ -1,51 +1,7 @@
-/* Refinamiento táctil: el giro conserva el ritmo de escritorio fuera de móvil. */
+/* Celular: conserva los controles aprobados y la esquina de avance. */
 @media (max-width: 47.99rem) {
   .book {
     perspective: 1100px;
-  }
-
-  .book-page {
-    transition:
-      transform 1200ms cubic-bezier(0.5, 0.02, 0.2, 1),
-      opacity 520ms ease,
-      filter 600ms ease,
-      visibility 0s linear 1200ms;
-  }
-
-  .book-page.is-active {
-    filter: brightness(1);
-  }
-
-  .book-page.is-previous {
-    filter: brightness(0.985);
-    transform: translateX(-1.5%) rotateY(-112deg);
-  }
-
-  .book-page.is-previous.is-turning {
-    visibility: visible;
-    opacity: 1;
-    box-shadow: 1.2rem 0 2.8rem oklch(20% 0.02 90 / 0.12);
-  }
-
-  .book-page.is-next.is-turning {
-    z-index: 9;
-    visibility: visible;
-    opacity: 1;
-  }
-
-  .book-page.is-turning::after {
-    opacity: 0.58;
-    background:
-      linear-gradient(
-        90deg,
-        transparent 42%,
-        oklch(20% 0.02 90 / 0.035) 68%,
-        oklch(20% 0.02 90 / 0.16) 100%
-      );
-  }
-
-  .book-page.is-active:not(.is-turning) {
-    animation: mobile-page-settle 1200ms cubic-bezier(0.58, 0.02, 0.22, 1);
   }
 
   .menu-page {
@@ -68,7 +24,7 @@
         oklch(83% 0.045 82 / 0.8) 50%,
         var(--ivory-deep) 72%,
         var(--ivory) 100%
-    );
+      );
     clip-path: polygon(100% 0, 100% 100%, 0 100%);
     transform: none;
   }
@@ -106,13 +62,13 @@
     flex-direction: row;
     width: 2.75rem;
     height: 2.75rem;
+    justify-content: center;
     padding: 0;
     border: 1px solid currentColor;
     border-radius: 50%;
-    justify-content: center;
     background: oklch(97% 0.015 85 / 0.72);
-    transform: none;
     opacity: 0.68;
+    transform: none;
   }
 
   .page-control--previous::before,
@@ -127,147 +83,12 @@
   .page-control--previous.page-control--light {
     background: oklch(30% 0.04 135 / 0.72);
   }
-
-  @supports (transform-style: preserve-3d) {
-    .book-page.is-turning-forward {
-      z-index: 10;
-      transform-origin: left center;
-      animation: page-flip-forward 1200ms cubic-bezier(0.48, 0.02, 0.18, 1) both;
-      transition: none;
-    }
-
-    .book-page.is-turning-backward {
-      z-index: 10;
-      transform-origin: right center;
-      animation: page-flip-backward 1200ms cubic-bezier(0.48, 0.02, 0.18, 1) both;
-      transition: none;
-    }
-
-    .book-page.is-turning-forward::after {
-      animation: page-flip-shadow-forward 1200ms ease-in-out both;
-    }
-
-    .book-page.is-turning-backward::after {
-      background: linear-gradient(90deg, oklch(20% 0.02 90 / 0.16), transparent 46%);
-      animation: page-flip-shadow-backward 1200ms ease-in-out both;
-    }
-  }
-
-  @keyframes page-flip-forward {
-    0% {
-      filter: brightness(1);
-      transform: translate3d(0, 0, 0) rotateY(0deg) skewY(0deg) scaleX(1);
-    }
-
-    20% {
-      filter: brightness(0.995);
-      transform: translate3d(-0.15%, 0, 1px) rotateY(-28deg) skewY(-0.45deg) scaleX(0.995);
-    }
-
-    48% {
-      filter: brightness(0.985);
-      transform: translate3d(-0.8%, -0.15%, 1px) rotateY(-84deg) skewY(-1.15deg) scaleX(0.94);
-    }
-
-    52% {
-      filter: brightness(0.98);
-      transform: translate3d(-0.8%, -0.15%, 1px) rotateY(-96deg) skewY(1deg) scaleX(0.94);
-    }
-
-    80% {
-      filter: brightness(0.99);
-      transform: translate3d(-0.2%, 0, 1px) rotateY(-154deg) skewY(0.4deg) scaleX(0.995);
-    }
-
-    100% {
-      filter: brightness(1);
-      transform: translate3d(0, 0, 0) rotateY(-180deg) skewY(0deg) scaleX(1);
-    }
-  }
-
-  @keyframes page-flip-backward {
-    0% {
-      filter: brightness(1);
-      transform: translate3d(0, 0, 0) rotateY(0deg) skewY(0deg) scaleX(1);
-    }
-
-    20% {
-      filter: brightness(0.995);
-      transform: translate3d(0.15%, 0, 1px) rotateY(28deg) skewY(0.45deg) scaleX(0.995);
-    }
-
-    48% {
-      filter: brightness(0.985);
-      transform: translate3d(0.8%, -0.15%, 1px) rotateY(84deg) skewY(1.15deg) scaleX(0.94);
-    }
-
-    52% {
-      filter: brightness(0.98);
-      transform: translate3d(0.8%, -0.15%, 1px) rotateY(96deg) skewY(-1deg) scaleX(0.94);
-    }
-
-    80% {
-      filter: brightness(0.99);
-      transform: translate3d(0.2%, 0, 1px) rotateY(154deg) skewY(-0.4deg) scaleX(0.995);
-    }
-
-    100% {
-      filter: brightness(1);
-      transform: translate3d(0, 0, 0) rotateY(180deg) skewY(0deg) scaleX(1);
-    }
-  }
-
-  @keyframes page-flip-shadow-forward {
-    0%,
-    100% {
-      opacity: 0;
-    }
-
-    46%,
-    54% {
-      opacity: 0.58;
-    }
-  }
-
-  @keyframes page-flip-shadow-backward {
-    0%,
-    100% {
-      opacity: 0;
-    }
-
-    46%,
-    54% {
-      opacity: 0.5;
-    }
-  }
-
-  @keyframes mobile-page-settle {
-    0%,
-    52% {
-      filter: brightness(0.985);
-    }
-
-    100% {
-      filter: brightness(1);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .book-page.is-turning-forward,
-    .book-page.is-turning-backward {
-      animation: none;
-    }
-
-    .book-page.is-turning-forward::after,
-    .book-page.is-turning-backward::after {
-      animation: none;
-    }
-  }
 }
 
 /* Tablet */
 @media (min-width: 48rem) {
-  .book-page {
+  .book-page,
+  .page-leaf__face {
     padding: 4.5rem 3rem;
   }
 
@@ -288,7 +109,8 @@
     left: 0.75rem;
   }
 
-  .menu-page {
+  .menu-page,
+  .page-leaf__face.menu-page {
     padding: 2rem 5rem;
   }
 }
@@ -301,7 +123,8 @@
     box-shadow: 0 0 5rem oklch(15% 0.02 135 / 0.32);
   }
 
-  .book-page {
+  .book-page,
+  .page-leaf__face {
     border-right: 1px solid oklch(60% 0.11 75 / 0.15);
     border-left: 1px solid oklch(60% 0.11 75 / 0.15);
   }
@@ -321,7 +144,8 @@
 
 /* Teléfonos de poca altura */
 @media (max-height: 42rem) {
-  .book-page {
+  .book-page,
+  .page-leaf__face {
     padding-top: 1.35rem;
     padding-bottom: 1.35rem;
   }
