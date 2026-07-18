@@ -153,14 +153,24 @@
   }
 
   .thanks h2 {
-    margin-bottom: clamp(0.55rem, 1.5vh, 0.9rem);
+    margin-bottom: clamp(0.4rem, 1vh, 0.65rem);
     font-size: clamp(3rem, 10vh, 4.35rem);
   }
 
   .thanks__message {
-    margin-bottom: clamp(1rem, 3vh, 2rem);
-    font-size: clamp(0.88rem, 2.3vh, 1rem);
-    line-height: 1.48;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.45rem, 1.2vh, 0.7rem);
+    margin-bottom: clamp(0.75rem, 2vh, 1.25rem);
+    line-height: 1.42;
+  }
+
+  .thanks__message-primary {
+    font-size: 1.15rem;
+  }
+
+  .thanks__message-secondary {
+    font-size: 1.1rem;
   }
 
   .thanks__names,

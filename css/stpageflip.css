@@ -356,7 +356,7 @@ body[data-current-page="2"] .book-control::before {
 
   .book-page.stf__item.welcome > .welcome__content {
     top: calc(
-      50% - clamp(1.55rem, 5vh, 2.4rem) +
+      50% - 11vh +
       env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
     );
     width: min(100%, 23rem);
@@ -372,7 +372,7 @@ body[data-current-page="2"] .book-control::before {
 
   .book-page.stf__item.thanks > .thanks__content {
     top: calc(
-      50% - clamp(1.55rem, 5vh, 2.4rem) +
+      50% - 10vh +
       env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
     );
     width: min(calc(100% - 2rem), 23rem);
