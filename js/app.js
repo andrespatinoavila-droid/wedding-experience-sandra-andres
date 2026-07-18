@@ -5,6 +5,7 @@ const pages = [...document.querySelectorAll(".book-page")];
 const pageStatus = document.querySelector("#page-status");
 const photoViewer = document.querySelector("#menu-photo-viewer");
 const viewerContinue = document.querySelector("#viewer-continue");
+const viewerCover = document.querySelector("#viewer-cover");
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
 
 let pageFlip = null;
@@ -112,6 +113,19 @@ function initializeControls() {
     if (!pageFlip || isZoomActive()) return;
     setViewerActive(false);
     window.requestAnimationFrame(() => pageFlip.flipNext("bottom"));
+  });
+
+  viewerCover.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!pageFlip || isZoomActive()) return;
+
+    document.body.classList.add("viewer-returning");
+    window.setTimeout(() => {
+      document.body.classList.remove("viewer-returning");
+      setViewerActive(false);
+      pageFlip.turnToPrevPage();
+    }, 380);
   });
 
   document.querySelector(".skip-link")?.addEventListener("click", (event) => {
