@@ -142,12 +142,49 @@ function noteInteraction() {
   registerIdleRecovery();
 }
 
+function clampPanToVisibleBounds(x, y, scale) {
+  if (!activeSurface || !activeSurfaceParent || scale <= 1) {
+    return { x: 0, y: 0 };
+  }
+
+  const surfaceRect = activeSurface.getBoundingClientRect();
+  const parentRect = activeSurfaceParent.getBoundingClientRect();
+  const baseWidth = surfaceRect.width / scale;
+  const baseHeight = surfaceRect.height / scale;
+  const maxX = Math.max(0, (baseWidth * scale - parentRect.width) / (2 * scale));
+  const maxY = Math.max(0, (baseHeight * scale - parentRect.height) / (2 * scale));
+
+  return {
+    x: Math.max(-maxX, Math.min(maxX, x)),
+    y: Math.max(-maxY, Math.min(maxY, y)),
+  };
+}
+
 function handlePanzoomChange(event) {
-  viewerPosition = {
+  const scale = Number(event.detail?.scale) || 1;
+  const requestedPosition = {
     x: Number(event.detail?.x) || 0,
     y: Number(event.detail?.y) || 0,
   };
-  syncScaleState(Number(event.detail?.scale) || 1);
+  const boundedPosition = clampPanToVisibleBounds(
+    requestedPosition.x,
+    requestedPosition.y,
+    scale
+  );
+
+  if (
+    panzoom &&
+    (Math.abs(boundedPosition.x - requestedPosition.x) > 0.01 ||
+      Math.abs(boundedPosition.y - requestedPosition.y) > 0.01)
+  ) {
+    panzoom.pan(boundedPosition.x, boundedPosition.y, {
+      animate: false,
+      silent: true,
+    });
+  }
+
+  viewerPosition = boundedPosition;
+  syncScaleState(scale);
   noteInteraction();
 }
 
