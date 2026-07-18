@@ -14,12 +14,16 @@ const viewerSurfaces = [
 ];
 
 const NORMAL_SCALE_LIMIT = 1.02;
-const CONTROL_RESTORE_DELAY = 250;
+const CONTROL_RESTORE_DELAY = 320;
 const IDLE_RECOVERY_DELAY = 2000;
 const DOUBLE_TAP_DELAY = 320;
+const MOBILE_CONTROLS_ONLY =
+  window.matchMedia("(pointer: coarse)").matches ||
+  navigator.maxTouchPoints > 0;
 
 let pageFlip = null;
 let pageFlipInputSuspended = false;
+let panzoomGestureActive = false;
 let previousControl = null;
 let nextControl = null;
 let viewerActive = false;
@@ -36,6 +40,7 @@ let viewportResetTimer = null;
 let lastTap = { time: 0, surface: null };
 let suppressDoubleClickUntil = 0;
 let lastInteractionAt = Date.now();
+let activeWheelHandler = null;
 
 function isZoomActive() {
   return viewerScale > NORMAL_SCALE_LIMIT;
@@ -53,6 +58,10 @@ function suspendPageFlipInput() {
 }
 
 function resumePageFlipInput() {
+  if (MOBILE_CONTROLS_ONLY) {
+    suspendPageFlipInput();
+    return;
+  }
   if (!pageFlip || !pageFlipInputSuspended) return;
   pageFlip.getUI()?.setHandlers();
   pageFlipInputSuspended = false;
@@ -66,14 +75,18 @@ function setNavigationLocked(locked) {
 }
 
 function showControlsAtNormalScale() {
-  if (isZoomActive() || activePointers.size > 0) return;
+  if (isZoomActive() || panzoomGestureActive || activePointers.size > 0) return;
   setNavigationLocked(false);
 }
 
 function scheduleControlsRestore() {
   window.clearTimeout(controlsRestoreTimer);
   controlsRestoreTimer = window.setTimeout(() => {
-    if (!isZoomActive() && activePointers.size === 0) {
+    if (
+      !isZoomActive() &&
+      !panzoomGestureActive &&
+      activePointers.size === 0
+    ) {
       showControlsAtNormalScale();
     }
   }, CONTROL_RESTORE_DELAY);
@@ -83,7 +96,7 @@ function syncScaleState(scale) {
   viewerScale = Number.isFinite(scale) ? scale : 1;
   document.body.dataset.viewerScale = viewerScale.toFixed(3);
 
-  if (isZoomActive()) {
+  if (isZoomActive() || panzoomGestureActive || activePointers.size > 1) {
     window.clearTimeout(controlsRestoreTimer);
     setNavigationLocked(true);
     return;
@@ -100,6 +113,7 @@ function resetViewerState({ animate = false } = {}) {
   window.clearTimeout(controlsRestoreTimer);
   window.clearTimeout(idleRecoveryTimer);
   activePointers.clear();
+  panzoomGestureActive = false;
   lastTap = { time: 0, surface: null };
 
   if (panzoom) {
@@ -137,10 +151,13 @@ function handlePanzoomChange(event) {
 }
 
 function handlePanzoomStart() {
+  panzoomGestureActive = true;
+  setNavigationLocked(true);
   noteInteraction();
 }
 
 function handlePanzoomEnd() {
+  panzoomGestureActive = false;
   noteInteraction();
   if (!isZoomActive()) scheduleControlsRestore();
 }
@@ -150,6 +167,10 @@ function removeActiveViewerListeners() {
   activeSurface.removeEventListener("panzoomchange", handlePanzoomChange);
   activeSurface.removeEventListener("panzoomstart", handlePanzoomStart);
   activeSurface.removeEventListener("panzoomend", handlePanzoomEnd);
+  if (activeSurfaceParent && activeWheelHandler) {
+    activeSurfaceParent.removeEventListener("wheel", activeWheelHandler);
+  }
+  activeWheelHandler = null;
 }
 
 function toggleViewerZoom(event) {
@@ -194,6 +215,21 @@ function activateViewerEngine(pageIndex) {
   activeSurface.addEventListener("panzoomend", handlePanzoomEnd);
 
   activeSurfaceParent.style.touchAction = "none";
+  activeWheelHandler = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    panzoomGestureActive = true;
+    setNavigationLocked(true);
+    panzoom.zoomWithWheel(event);
+    window.clearTimeout(controlsRestoreTimer);
+    controlsRestoreTimer = window.setTimeout(() => {
+      panzoomGestureActive = false;
+      if (!isZoomActive()) scheduleControlsRestore();
+    }, CONTROL_RESTORE_DELAY);
+  };
+  activeSurfaceParent.addEventListener("wheel", activeWheelHandler, {
+    passive: false,
+  });
   resetViewerState({ animate: false });
   window.__weddingViewer = {
     get instance() {
@@ -220,6 +256,12 @@ function initializeSurfaceGestures() {
         if (surface !== activeSurface) return;
         activePointers.add(event.pointerId);
         noteInteraction();
+        if (activePointers.size > 1) {
+          panzoomGestureActive = true;
+          setNavigationLocked(true);
+          event.preventDefault();
+          event.stopPropagation();
+        }
       },
       { capture: true }
     );
@@ -256,9 +298,59 @@ function initializeSurfaceGestures() {
           }
         }
 
-        if (!isZoomActive()) scheduleControlsRestore();
+        if (activePointers.size === 0) {
+          panzoomGestureActive = false;
+          if (!isZoomActive()) scheduleControlsRestore();
+        }
       },
       { capture: true }
+    );
+
+    surface.addEventListener(
+      "touchstart",
+      (event) => {
+        if (surface !== activeSurface || event.touches.length < 2) return;
+        panzoomGestureActive = true;
+        setNavigationLocked(true);
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      { capture: true, passive: false }
+    );
+
+    surface.addEventListener(
+      "touchmove",
+      (event) => {
+        if (surface !== activeSurface) return;
+        noteInteraction();
+      },
+      { capture: true, passive: false }
+    );
+
+    ["gesturestart", "gesturechange"].forEach((eventName) => {
+      surface.addEventListener(
+        eventName,
+        (event) => {
+          if (surface !== activeSurface) return;
+          panzoomGestureActive = true;
+          setNavigationLocked(true);
+          event.preventDefault();
+          event.stopPropagation();
+        },
+        { capture: true, passive: false }
+      );
+    });
+
+    surface.addEventListener(
+      "gestureend",
+      (event) => {
+        if (surface !== activeSurface) return;
+        event.preventDefault();
+        event.stopPropagation();
+        panzoomGestureActive = false;
+        if (!isZoomActive()) scheduleControlsRestore();
+      },
+      { capture: true, passive: false }
     );
 
     surface.addEventListener(
@@ -423,9 +515,9 @@ function initializePageFlip() {
     maxShadowOpacity: 0.34,
     showCover: false,
     mobileScrollSupport: true,
-    swipeDistance: 32,
+    swipeDistance: 70,
     clickEventForward: true,
-    useMouseEvents: true,
+    useMouseEvents: !MOBILE_CONTROLS_ONLY,
     showPageCorners: true,
     disableFlipByClick: true,
   });
@@ -434,6 +526,9 @@ function initializePageFlip() {
   pageFlip.on("flip", (event) => updatePageStatus(event.data));
   pageFlip.loadFromHTML(pages);
   window.__weddingPageFlip = pageFlip;
+  document.body.dataset.mobilePageFlip = MOBILE_CONTROLS_ONLY
+    ? "controls-only"
+    : "free-swipe";
 
   initializeControls();
   initializeSurfaceGestures();
