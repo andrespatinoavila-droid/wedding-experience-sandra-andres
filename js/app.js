@@ -19,10 +19,8 @@ const zoom = {
   x: 0,
   y: 0,
   pointers: new Map(),
-  startX: 0,
-  startY: 0,
-  startOffsetX: 0,
-  startOffsetY: 0,
+  panX: 0,
+  panY: 0,
   pinchDistance: 0,
   pinchScale: 1,
 };
@@ -119,10 +117,8 @@ function initializeMenuZoom() {
     zoom.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (zoom.pointers.size === 1) {
-      zoom.startX = event.clientX;
-      zoom.startY = event.clientY;
-      zoom.startOffsetX = zoom.x;
-      zoom.startOffsetY = zoom.y;
+      zoom.panX = event.clientX;
+      zoom.panY = event.clientY;
     } else if (zoom.pointers.size === 2) {
       zoom.pinchDistance = pointerDistance();
       zoom.pinchScale = zoom.scale;
@@ -131,14 +127,17 @@ function initializeMenuZoom() {
 
   menuViewer.addEventListener("pointermove", (event) => {
     if (!zoom.pointers.has(event.pointerId)) return;
+    event.preventDefault();
     zoom.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (zoom.pointers.size === 2) {
       zoom.scale = clamp(zoom.pinchScale * (pointerDistance() / zoom.pinchDistance), 1, 4);
       renderMenuZoom();
     } else if (zoom.scale > 1) {
-      zoom.x = zoom.startOffsetX + event.clientX - zoom.startX;
-      zoom.y = zoom.startOffsetY + event.clientY - zoom.startY;
+      zoom.x += event.clientX - zoom.panX;
+      zoom.y += event.clientY - zoom.panY;
+      zoom.panX = event.clientX;
+      zoom.panY = event.clientY;
       renderMenuZoom();
     }
   });
@@ -147,10 +146,8 @@ function initializeMenuZoom() {
     zoom.pointers.delete(event.pointerId);
     if (zoom.pointers.size === 1) {
       const [remaining] = zoom.pointers.values();
-      zoom.startX = remaining.x;
-      zoom.startY = remaining.y;
-      zoom.startOffsetX = zoom.x;
-      zoom.startOffsetY = zoom.y;
+      zoom.panX = remaining.x;
+      zoom.panY = remaining.y;
     }
   }
 

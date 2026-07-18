@@ -205,6 +205,17 @@ h1 i {
   font-weight: 400;
 }
 
+.couple-names {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.couple-names span,
+.couple-names i {
+  display: block;
+}
+
 .date {
   margin-bottom: 1.45rem;
   color: var(--olive);
