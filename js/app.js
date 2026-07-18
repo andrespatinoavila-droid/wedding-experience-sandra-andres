@@ -8,10 +8,22 @@ const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
 let pageFlip = null;
 let menuGestureLocked = false;
 let previousControl = null;
+let nextControl = null;
+let stableViewportHeight = window.innerHeight;
 
-function syncViewportHeight() {
-  const viewportHeight = window.visualViewport?.height || window.innerHeight;
-  document.documentElement.style.setProperty("--app-height", `${viewportHeight}px`);
+function isZoomActive() {
+  return (window.visualViewport?.scale || 1) > 1.01;
+}
+
+function syncViewportState() {
+  const zoomActive = isZoomActive();
+  document.body.classList.toggle("is-zoomed", zoomActive);
+  book.setAttribute("aria-disabled", String(zoomActive));
+
+  if (!zoomActive) {
+    stableViewportHeight = window.visualViewport?.height || window.innerHeight;
+    document.documentElement.style.setProperty("--app-height", `${stableViewportHeight}px`);
+  }
 }
 
 function preparePages() {
@@ -40,11 +52,29 @@ function updatePageStatus(pageIndex) {
     previousControl.querySelector("span").textContent =
       safeIndex === 2 ? "Regresar" : "Portada";
   }
+  if (nextControl) {
+    nextControl.hidden = safeIndex === pages.length - 1;
+    nextControl.querySelector("span").textContent =
+      safeIndex === 0 ? "Ver menú" : "Continuar";
+  }
 }
 
 function initializeControls() {
+  nextControl = document.createElement("button");
+  nextControl.className = "book-control book-control--next";
+  nextControl.type = "button";
+  nextControl.setAttribute("aria-label", "Pasar a la página siguiente");
+  nextControl.innerHTML = '<span>Ver menú</span><i aria-hidden="true">→</i>';
+  nextControl.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!pageFlip || isZoomActive()) return;
+    pageFlip.flipNext("bottom");
+  });
+  document.body.append(nextControl);
+
   previousControl = document.createElement("button");
-  previousControl.className = "global-page-previous";
+  previousControl.className = "book-control book-control--previous";
   previousControl.type = "button";
   previousControl.hidden = true;
   previousControl.setAttribute("aria-label", "Regresar a la página anterior");
@@ -52,7 +82,7 @@ function initializeControls() {
   previousControl.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    if (!pageFlip) return;
+    if (!pageFlip || isZoomActive()) return;
     pageFlip.turnToPrevPage();
   });
   document.body.append(previousControl);
@@ -68,7 +98,7 @@ function initializeMenuGestureIsolation() {
   if (!menuViewer) return;
 
   const shouldLockMenuGesture = (event) =>
-    event.touches?.length > 1 || (window.visualViewport?.scale || 1) > 1.01;
+    event.touches?.length > 1 || isZoomActive();
 
   menuViewer.addEventListener(
     "touchstart",
@@ -99,7 +129,7 @@ function initializeMenuGestureIsolation() {
       event.stopPropagation();
       if (event.touches.length === 0) {
         window.setTimeout(() => {
-          menuGestureLocked = false;
+          menuGestureLocked = isZoomActive();
         }, 80);
       }
     },
@@ -158,7 +188,8 @@ function initializePageFlip() {
   updatePageStatus(0);
 }
 
-syncViewportHeight();
-window.addEventListener("resize", syncViewportHeight, { passive: true });
-window.visualViewport?.addEventListener("resize", syncViewportHeight, { passive: true });
+syncViewportState();
+window.addEventListener("resize", syncViewportState, { passive: true });
+window.visualViewport?.addEventListener("resize", syncViewportState, { passive: true });
+window.visualViewport?.addEventListener("scroll", syncViewportState, { passive: true });
 initializePageFlip();

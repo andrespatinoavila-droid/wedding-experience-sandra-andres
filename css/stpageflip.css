@@ -76,72 +76,113 @@
   transform: translate(-50%, -50%);
 }
 
-.book-page.stf__item .page-control--next span {
-  position: absolute;
-  right: 0.6rem;
-  bottom: 2.35rem;
-  width: 4.25rem;
-  height: auto;
-  overflow: visible;
-  clip: auto;
-  color: var(--olive);
-  font-size: 0.55rem;
-  letter-spacing: 0.09em;
-  line-height: 1.15;
-  text-align: center;
-  writing-mode: horizontal-tb;
-  transform: rotate(-45deg);
-  transform-origin: center;
-}
-
-.book-page.stf__item .page-control--next {
-  width: 6.25rem;
-  height: 6.25rem;
-  pointer-events: none;
-}
-
-.book-page.stf__item .page-control--next i {
-  right: 0.7rem;
-  bottom: 0.6rem;
-}
-
-.book-page.stf__item .page-control--previous {
+.book-page.stf__item .page-control {
   display: none;
 }
 
-.book-page.stf__item .page-control > * {
-  pointer-events: none;
-}
-
-.global-page-previous {
+.book-control {
   position: fixed;
-  z-index: 100;
-  top: 0.65rem;
-  left: 0.65rem;
+  z-index: 1000;
+  bottom: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  min-width: 2.75rem;
-  height: 2.75rem;
-  padding: 0 0.8rem;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  background: oklch(97% 0.015 85 / 0.82);
+  width: 6.2rem;
+  height: 6.2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--olive);
   font: 500 0.55rem/1 var(--sans);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  backdrop-filter: blur(0.35rem);
+  transition: opacity 180ms ease, visibility 180ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.global-page-previous[hidden] {
+.book-control::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0 48%,
+      oklch(83% 0.045 82 / 0.82) 49%,
+      var(--ivory-deep) 70%,
+      var(--ivory) 100%
+    );
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  content: "";
+  filter: drop-shadow(-0.25rem -0.25rem 0.4rem oklch(20% 0.02 90 / 0.13));
+}
+
+.book-control span,
+.book-control i {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.book-control span {
+  right: 0.6rem;
+  bottom: 2.25rem;
+  width: 4.1rem;
+  line-height: 1.15;
+  text-align: center;
+  transform: rotate(-45deg);
+}
+
+.book-control i {
+  right: 0.65rem;
+  bottom: 0.55rem;
+  font-size: 1rem;
+  font-style: normal;
+}
+
+.book-control--next {
+  right: 0;
+}
+
+.book-control--previous {
+  left: 0;
+  transform: scaleX(-1);
+}
+
+.book-control--previous span,
+.book-control--previous i {
+  transform: scaleX(-1) rotate(45deg);
+}
+
+.book-control--previous i {
+  transform: scaleX(-1);
+}
+
+.book-control[hidden] {
   display: none;
 }
 
-body[data-current-page="2"] .global-page-previous {
-  background: oklch(30% 0.04 135 / 0.82);
+.is-zoomed .book-control {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.is-zoomed .book .stf__block {
+  pointer-events: none;
+}
+
+body[data-current-page="2"] .book-control {
   color: var(--gold-light);
+}
+
+body[data-current-page="2"] .book-control::before {
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0 48%,
+      oklch(55% 0.08 82 / 0.72) 49%,
+      oklch(34% 0.045 135) 70%,
+      var(--olive-dark) 100%
+    );
 }
 
 .pageflip-unavailable .book-page:first-of-type {
