@@ -123,6 +123,7 @@ function resetViewerState({ animate = false } = {}) {
   viewerScale = 1;
   viewerPosition = { x: 0, y: 0 };
   setNavigationLocked(false);
+  setAppHeight();
   scheduleControlsRestore();
 }
 
@@ -202,9 +203,12 @@ function activateViewerEngine(pageIndex) {
     minScale: 1,
     maxScale: 5,
     step: 0.35,
+    canvas: false,
+    disablePan: false,
+    disableZoom: false,
     pinchAndPan: true,
     panOnlyWhenZoomed: true,
-    animate: true,
+    animate: false,
     duration: 220,
     easing: "ease-out",
     cursor: "default",
@@ -358,7 +362,14 @@ function initializeSurfaceGestures() {
       (event) => {
         if (surface !== activeSurface) return;
         event.stopPropagation();
-        resetViewerState({ animate: false });
+        activePointers.delete(event.pointerId);
+        panzoomGestureActive = false;
+        noteInteraction();
+        if (isZoomActive()) {
+          setNavigationLocked(true);
+        } else {
+          scheduleControlsRestore();
+        }
       },
       { capture: true }
     );
@@ -535,7 +546,19 @@ function initializePageFlip() {
   updatePageStatus(0);
 }
 
-function handleViewportChange() {
+function handleViewportResize() {
+  if (isZoomActive() || panzoomGestureActive || activePointers.size > 0) {
+    return;
+  }
+
+  setAppHeight();
+  window.clearTimeout(viewportResetTimer);
+  viewportResetTimer = window.setTimeout(() => {
+    resetViewerState({ animate: false });
+  }, 120);
+}
+
+function handleOrientationChange() {
   setAppHeight();
   window.clearTimeout(viewportResetTimer);
   viewportResetTimer = window.setTimeout(() => {
@@ -544,16 +567,19 @@ function handleViewportChange() {
 }
 
 setAppHeight();
-window.addEventListener("orientationchange", handleViewportChange, {
+window.addEventListener("orientationchange", handleOrientationChange, {
   passive: true,
 });
-window.addEventListener("resize", handleViewportChange, { passive: true });
-window.visualViewport?.addEventListener("resize", handleViewportChange, {
+window.addEventListener("resize", handleViewportResize, { passive: true });
+window.visualViewport?.addEventListener("resize", handleViewportResize, {
   passive: true,
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) resetViewerState({ animate: false });
+  if (!document.hidden && !isZoomActive()) {
+    setAppHeight();
+    scheduleControlsRestore();
+  }
 });
 
 initializePageFlip();
