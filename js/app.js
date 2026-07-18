@@ -9,7 +9,7 @@ const viewerCover = document.querySelector("#viewer-cover");
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
 
 let pageFlip = null;
-let menuGestureLocked = false;
+let zoomGestureLocked = false;
 let previousControl = null;
 let nextControl = null;
 let stableViewportHeight = window.innerHeight;
@@ -134,57 +134,58 @@ function initializeControls() {
   });
 }
 
-function initializeMenuGestureIsolation() {
-  const menuViewer = document.querySelector("#menu-viewer");
-  if (!menuViewer) return;
-
-  const shouldLockMenuGesture = (event) =>
+function initializeZoomGestureIsolation() {
+  const shouldLockZoomGesture = (event) =>
     event.touches?.length > 1 || isZoomActive();
 
-  menuViewer.addEventListener(
-    "touchstart",
-    (event) => {
-      if (viewerActive && shouldLockMenuGesture(event)) {
-        menuGestureLocked = true;
-        event.stopPropagation();
-      }
-    },
-    { capture: true, passive: true }
-  );
+  document
+    .querySelectorAll(".welcome, .thanks, #menu-viewer")
+    .forEach((surface) => {
+      surface.addEventListener(
+        "touchstart",
+        (event) => {
+          if (shouldLockZoomGesture(event)) {
+            zoomGestureLocked = true;
+            event.stopPropagation();
+          }
+        },
+        { capture: true, passive: true }
+      );
 
-  menuViewer.addEventListener(
-    "touchmove",
-    (event) => {
-      if (viewerActive && (menuGestureLocked || shouldLockMenuGesture(event))) {
-        menuGestureLocked = true;
-        event.stopPropagation();
-      }
-    },
-    { capture: true, passive: true }
-  );
+      surface.addEventListener(
+        "touchmove",
+        (event) => {
+          if (zoomGestureLocked || shouldLockZoomGesture(event)) {
+            zoomGestureLocked = true;
+            event.stopPropagation();
+          }
+        },
+        { capture: true, passive: true }
+      );
 
-  menuViewer.addEventListener(
-    "touchend",
-    (event) => {
-      if (!menuGestureLocked) return;
-      event.stopPropagation();
-      if (event.touches.length === 0) {
-        window.setTimeout(() => {
-          menuGestureLocked = isZoomActive();
-        }, 80);
-      }
-    },
-    { capture: true, passive: true }
-  );
+      surface.addEventListener(
+        "touchend",
+        (event) => {
+          if (!zoomGestureLocked) return;
+          event.stopPropagation();
+          if (event.touches.length === 0) {
+            window.setTimeout(() => {
+              zoomGestureLocked = isZoomActive();
+            }, 80);
+          }
+        },
+        { capture: true, passive: true }
+      );
 
-  menuViewer.addEventListener(
-    "touchcancel",
-    (event) => {
-      if (menuGestureLocked) event.stopPropagation();
-      menuGestureLocked = false;
-    },
-    { capture: true, passive: true }
-  );
+      surface.addEventListener(
+        "touchcancel",
+        (event) => {
+          if (zoomGestureLocked) event.stopPropagation();
+          zoomGestureLocked = false;
+        },
+        { capture: true, passive: true }
+      );
+    });
 }
 
 function initializePageFlip() {
@@ -225,7 +226,7 @@ function initializePageFlip() {
   window.__weddingPageFlip = pageFlip;
 
   initializeControls();
-  initializeMenuGestureIsolation();
+  initializeZoomGestureIsolation();
   updatePageStatus(0);
 }
 

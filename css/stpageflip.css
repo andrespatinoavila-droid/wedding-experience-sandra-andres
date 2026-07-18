@@ -3,7 +3,7 @@
   display: block;
   box-sizing: border-box;
   transform: translateZ(0);
-  touch-action: pan-x pan-y pinch-zoom;
+  touch-action: auto;
 }
 
 .stf__wrapper {
@@ -43,6 +43,7 @@
   min-height: 0 !important;
   margin: 0 auto;
   perspective: none;
+  touch-action: auto;
 }
 
 .book .stf__wrapper {
@@ -60,6 +61,7 @@
   visibility: visible;
   opacity: 1;
   transition: none;
+  touch-action: auto;
 }
 
 .book-page.stf__item > .page-content {
