@@ -35,13 +35,14 @@ function goToPage(targetPage) {
   if (isTurning || targetPage < 0 || targetPage >= pages.length || targetPage === currentPage) return;
 
   const leavingPage = pages[currentPage];
+  const turnDirection = targetPage > currentPage ? "forward" : "backward";
   isTurning = true;
-  leavingPage.classList.add("is-turning");
+  leavingPage.classList.add("is-turning", `is-turning-${turnDirection}`);
   currentPage = targetPage;
   renderPages();
 
   window.setTimeout(() => {
-    leavingPage.classList.remove("is-turning");
+    leavingPage.classList.remove("is-turning", `is-turning-${turnDirection}`);
     isTurning = false;
     pages[currentPage].querySelector(".page-control")?.focus({ preventScroll: true });
   }, window.matchMedia("(prefers-reduced-motion: reduce)").matches
