@@ -68,10 +68,9 @@
         oklch(83% 0.045 82 / 0.8) 50%,
         var(--ivory-deep) 72%,
         var(--ivory) 100%
-      );
+    );
     clip-path: polygon(100% 0, 100% 100%, 0 100%);
     transform: none;
-    filter: drop-shadow(-0.35rem -0.35rem 0.55rem oklch(25% 0.02 90 / 0.13));
   }
 
   .page-control--next::before {
@@ -145,35 +144,35 @@
     0% {
       clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
       border-bottom-right-radius: 0;
-      filter: brightness(1) drop-shadow(0 0 0 transparent);
+      filter: brightness(1);
       transform: translate3d(0, 0, 0) skew(0);
     }
 
     14% {
       clip-path: polygon(0 0, 100% 0, 100% 86%, 86% 100%, 0 100%);
       border-bottom-right-radius: 7%;
-      filter: brightness(0.995) drop-shadow(-0.2rem 0.25rem 0.3rem oklch(20% 0.02 90 / 0.08));
+      filter: brightness(0.995);
       transform: translate3d(0, 0, 0) skew(-0.25deg);
     }
 
     46% {
       clip-path: polygon(0 0, 100% 0, 72% 52%, 40% 100%, 0 100%);
       border-bottom-right-radius: 16%;
-      filter: brightness(0.985) drop-shadow(-0.75rem 0.5rem 0.8rem oklch(20% 0.02 90 / 0.13));
+      filter: brightness(0.985);
       transform: translate3d(-0.5%, -0.2%, 0) skew(-1deg);
     }
 
     76% {
       clip-path: polygon(0 0, 79% 0, 34% 39%, 0 82%, 0 82%);
       border-bottom-right-radius: 24%;
-      filter: brightness(0.98) drop-shadow(-1rem 0.35rem 1rem oklch(20% 0.02 90 / 0.12));
+      filter: brightness(0.98);
       transform: translate3d(-1.2%, -0.4%, 0) skew(-1.8deg);
     }
 
     100% {
       clip-path: polygon(0 0, 0 0, 0 0, 0 0, 0 0);
       border-bottom-right-radius: 30%;
-      filter: brightness(0.99) drop-shadow(-0.3rem 0 0.45rem transparent);
+      filter: brightness(0.99);
       transform: translate3d(-2%, -0.5%, 0) skew(-2.2deg);
     }
   }
@@ -182,35 +181,35 @@
     0% {
       clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
       border-bottom-left-radius: 0;
-      filter: brightness(1) drop-shadow(0 0 0 transparent);
+      filter: brightness(1);
       transform: translate3d(0, 0, 0) skew(0);
     }
 
     14% {
       clip-path: polygon(0 0, 100% 0, 100% 100%, 14% 100%, 0 86%);
       border-bottom-left-radius: 7%;
-      filter: brightness(0.995) drop-shadow(0.2rem 0.25rem 0.3rem oklch(20% 0.02 90 / 0.08));
+      filter: brightness(0.995);
       transform: translate3d(0, 0, 0) skew(0.25deg);
     }
 
     46% {
       clip-path: polygon(0 0, 100% 0, 100% 100%, 60% 100%, 28% 52%);
       border-bottom-left-radius: 16%;
-      filter: brightness(0.985) drop-shadow(0.75rem 0.5rem 0.8rem oklch(20% 0.02 90 / 0.13));
+      filter: brightness(0.985);
       transform: translate3d(0.5%, -0.2%, 0) skew(1deg);
     }
 
     76% {
       clip-path: polygon(21% 0, 100% 0, 100% 82%, 100% 82%, 66% 39%);
       border-bottom-left-radius: 24%;
-      filter: brightness(0.98) drop-shadow(1rem 0.35rem 1rem oklch(20% 0.02 90 / 0.12));
+      filter: brightness(0.98);
       transform: translate3d(1.2%, -0.4%, 0) skew(1.8deg);
     }
 
     100% {
       clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0, 100% 0);
       border-bottom-left-radius: 30%;
-      filter: brightness(0.99) drop-shadow(0.3rem 0 0.45rem transparent);
+      filter: brightness(0.99);
       transform: translate3d(2%, -0.5%, 0) skew(2.2deg);
     }
   }
