@@ -3,6 +3,8 @@
 const book = document.querySelector("#wedding-book");
 const pages = [...document.querySelectorAll(".book-page")];
 const pageStatus = document.querySelector("#page-status");
+const photoViewer = document.querySelector("#menu-photo-viewer");
+const viewerContinue = document.querySelector("#viewer-continue");
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
 
 let pageFlip = null;
@@ -10,6 +12,7 @@ let menuGestureLocked = false;
 let previousControl = null;
 let nextControl = null;
 let stableViewportHeight = window.innerHeight;
+let viewerActive = false;
 
 function isZoomActive() {
   return (window.visualViewport?.scale || 1) > 1.01;
@@ -18,11 +21,24 @@ function isZoomActive() {
 function syncViewportState() {
   const zoomActive = isZoomActive();
   document.body.classList.toggle("is-zoomed", zoomActive);
-  book.setAttribute("aria-disabled", String(zoomActive));
+  book.setAttribute("aria-disabled", String(zoomActive || viewerActive));
 
   if (!zoomActive) {
     stableViewportHeight = window.visualViewport?.height || window.innerHeight;
     document.documentElement.style.setProperty("--app-height", `${stableViewportHeight}px`);
+  }
+}
+
+function setViewerActive(active) {
+  viewerActive = active;
+  document.body.classList.toggle("viewer-active", active);
+  photoViewer.hidden = !active;
+  photoViewer.setAttribute("aria-hidden", String(!active));
+  book.setAttribute("aria-hidden", String(active));
+  book.setAttribute("aria-disabled", String(active || isZoomActive()));
+
+  if (active) {
+    window.setTimeout(() => viewerContinue.focus({ preventScroll: true }), 60);
   }
 }
 
@@ -48,15 +64,18 @@ function updatePageStatus(pageIndex) {
   book.dataset.currentPage = String(safeIndex);
   document.body.dataset.currentPage = String(safeIndex);
   if (previousControl) {
-    previousControl.hidden = safeIndex === 0;
+    previousControl.hidden = safeIndex === 0 || safeIndex === 1;
     previousControl.querySelector("span").textContent =
       safeIndex === 2 ? "Regresar" : "Portada";
   }
   if (nextControl) {
-    nextControl.hidden = safeIndex === pages.length - 1;
+    nextControl.hidden = safeIndex !== 0;
     nextControl.querySelector("span").textContent =
       safeIndex === 0 ? "Ver menú" : "Continuar";
   }
+
+  if (safeIndex === 1) setViewerActive(true);
+  if (safeIndex !== 1 && viewerActive) setViewerActive(false);
 }
 
 function initializeControls() {
@@ -87,6 +106,14 @@ function initializeControls() {
   });
   document.body.append(previousControl);
 
+  viewerContinue.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!pageFlip || isZoomActive()) return;
+    setViewerActive(false);
+    window.requestAnimationFrame(() => pageFlip.flipNext("bottom"));
+  });
+
   document.querySelector(".skip-link")?.addEventListener("click", (event) => {
     event.preventDefault();
     pageFlip?.flip(1, "bottom");
@@ -103,7 +130,7 @@ function initializeMenuGestureIsolation() {
   menuViewer.addEventListener(
     "touchstart",
     (event) => {
-      if (shouldLockMenuGesture(event)) {
+      if (viewerActive && shouldLockMenuGesture(event)) {
         menuGestureLocked = true;
         event.stopPropagation();
       }
@@ -114,7 +141,7 @@ function initializeMenuGestureIsolation() {
   menuViewer.addEventListener(
     "touchmove",
     (event) => {
-      if (menuGestureLocked || shouldLockMenuGesture(event)) {
+      if (viewerActive && (menuGestureLocked || shouldLockMenuGesture(event))) {
         menuGestureLocked = true;
         event.stopPropagation();
       }

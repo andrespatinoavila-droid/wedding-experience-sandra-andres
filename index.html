@@ -8,11 +8,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Karla:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css?v=20260718-book-controls">
-    <link rel="stylesheet" href="css/responsive.css?v=20260718-book-controls">
-    <link rel="stylesheet" href="css/stpageflip.css?v=20260718-book-controls">
+    <link rel="stylesheet" href="css/styles.css?v=20260718-photo-viewer">
+    <link rel="stylesheet" href="css/responsive.css?v=20260718-photo-viewer">
+    <link rel="stylesheet" href="css/stpageflip.css?v=20260718-photo-viewer">
     <script src="vendor/page-flip.browser.js?v=2.0.7" defer></script>
-    <script src="js/app.js?v=20260718-book-controls" defer></script>
+    <script src="js/app.js?v=20260718-photo-viewer" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#page-menu">Ir al menú</a>
@@ -63,38 +63,15 @@
         <div class="botanical botanical--bottom" aria-hidden="true"></div>
       </section>
 
-      <!-- Página 2: imagen oficial sin reconstrucción -->
+      <!-- Página 2: transición entre la portada y el visor -->
       <section
         id="page-menu"
-        class="book-page menu-page is-next"
+        class="book-page menu-transition-page is-next"
         data-page="1"
-        aria-label="Menú oficial de la boda"
+        aria-label="Acceso al menú oficial de la boda"
         aria-hidden="true"
         inert
       >
-        <button class="page-control page-control--previous" type="button" data-action="previous" aria-label="Regresar a la portada">
-          <i aria-hidden="true">←</i>
-          <span>Portada</span>
-        </button>
-
-        <div id="menu-viewer" class="menu-viewer page-content">
-          <div class="menu-viewer__canvas">
-            <img
-              id="official-menu"
-              class="official-menu"
-              src="img/menu/menu-oficial.png"
-              alt="Menú oficial de la boda de Sandra Bonilla y Andrés Patiño"
-              width="1024"
-              height="1536"
-              draggable="false"
-            >
-          </div>
-        </div>
-
-        <button class="page-control page-control--next" type="button" data-action="next" aria-label="Ver mensaje final">
-          <span>Continuar</span>
-          <i aria-hidden="true">→</i>
-        </button>
       </section>
 
       <!-- Página 3: agradecimiento -->
@@ -124,6 +101,36 @@
         </div>
       </footer>
     </main>
+
+    <aside
+      id="menu-photo-viewer"
+      class="photo-viewer"
+      aria-label="Visor del menú oficial"
+      aria-hidden="true"
+      hidden
+    >
+      <div id="menu-viewer" class="photo-viewer__stage">
+        <img
+          id="official-menu"
+          class="photo-viewer__image"
+          src="img/menu/menu-oficial.png"
+          alt="Menú oficial de la boda de Sandra Bonilla y Andrés Patiño"
+          width="1024"
+          height="1536"
+          draggable="false"
+        >
+      </div>
+
+      <button
+        id="viewer-continue"
+        class="viewer-continue"
+        type="button"
+        aria-label="Continuar al agradecimiento"
+      >
+        <span>Continuar</span>
+        <i aria-hidden="true">→</i>
+      </button>
+    </aside>
 
     <p id="page-status" class="visually-hidden" aria-live="polite">Portada</p>
   </body>
