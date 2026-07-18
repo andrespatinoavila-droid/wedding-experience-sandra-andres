@@ -128,89 +128,116 @@
     background: oklch(30% 0.04 135 / 0.72);
   }
 
-  @supports (clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%)) {
+  @supports (transform-style: preserve-3d) {
     .book-page.is-turning-forward {
-      animation: page-curl-forward 1200ms cubic-bezier(0.48, 0.02, 0.18, 1) both;
+      z-index: 10;
+      transform-origin: left center;
+      animation: page-flip-forward 1200ms cubic-bezier(0.48, 0.02, 0.18, 1) both;
       transition: none;
     }
 
     .book-page.is-turning-backward {
-      animation: page-curl-backward 1200ms cubic-bezier(0.48, 0.02, 0.18, 1) both;
+      z-index: 10;
+      transform-origin: right center;
+      animation: page-flip-backward 1200ms cubic-bezier(0.48, 0.02, 0.18, 1) both;
       transition: none;
     }
-  }
 
-  @keyframes page-curl-forward {
-    0% {
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
-      border-bottom-right-radius: 0;
-      filter: brightness(1);
-      transform: translate3d(0, 0, 0) skew(0);
+    .book-page.is-turning-forward::after {
+      animation: page-flip-shadow-forward 1200ms ease-in-out both;
     }
 
-    14% {
-      clip-path: polygon(0 0, 100% 0, 100% 86%, 86% 100%, 0 100%);
-      border-bottom-right-radius: 7%;
-      filter: brightness(0.995);
-      transform: translate3d(0, 0, 0) skew(-0.25deg);
-    }
-
-    46% {
-      clip-path: polygon(0 0, 100% 0, 72% 52%, 40% 100%, 0 100%);
-      border-bottom-right-radius: 16%;
-      filter: brightness(0.985);
-      transform: translate3d(-0.5%, -0.2%, 0) skew(-1deg);
-    }
-
-    76% {
-      clip-path: polygon(0 0, 79% 0, 34% 39%, 0 82%, 0 82%);
-      border-bottom-right-radius: 24%;
-      filter: brightness(0.98);
-      transform: translate3d(-1.2%, -0.4%, 0) skew(-1.8deg);
-    }
-
-    100% {
-      clip-path: polygon(0 0, 0 0, 0 0, 0 0, 0 0);
-      border-bottom-right-radius: 30%;
-      filter: brightness(0.99);
-      transform: translate3d(-2%, -0.5%, 0) skew(-2.2deg);
+    .book-page.is-turning-backward::after {
+      background: linear-gradient(90deg, oklch(20% 0.02 90 / 0.16), transparent 46%);
+      animation: page-flip-shadow-backward 1200ms ease-in-out both;
     }
   }
 
-  @keyframes page-curl-backward {
+  @keyframes page-flip-forward {
     0% {
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
-      border-bottom-left-radius: 0;
       filter: brightness(1);
-      transform: translate3d(0, 0, 0) skew(0);
+      transform: translate3d(0, 0, 0) rotateY(0deg) skewY(0deg) scaleX(1);
     }
 
-    14% {
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 14% 100%, 0 86%);
-      border-bottom-left-radius: 7%;
+    20% {
       filter: brightness(0.995);
-      transform: translate3d(0, 0, 0) skew(0.25deg);
+      transform: translate3d(-0.15%, 0, 1px) rotateY(-28deg) skewY(-0.45deg) scaleX(0.995);
     }
 
-    46% {
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 60% 100%, 28% 52%);
-      border-bottom-left-radius: 16%;
+    48% {
       filter: brightness(0.985);
-      transform: translate3d(0.5%, -0.2%, 0) skew(1deg);
+      transform: translate3d(-0.8%, -0.15%, 1px) rotateY(-84deg) skewY(-1.15deg) scaleX(0.94);
     }
 
-    76% {
-      clip-path: polygon(21% 0, 100% 0, 100% 82%, 100% 82%, 66% 39%);
-      border-bottom-left-radius: 24%;
+    52% {
       filter: brightness(0.98);
-      transform: translate3d(1.2%, -0.4%, 0) skew(1.8deg);
+      transform: translate3d(-0.8%, -0.15%, 1px) rotateY(-96deg) skewY(1deg) scaleX(0.94);
+    }
+
+    80% {
+      filter: brightness(0.99);
+      transform: translate3d(-0.2%, 0, 1px) rotateY(-154deg) skewY(0.4deg) scaleX(0.995);
     }
 
     100% {
-      clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0, 100% 0);
-      border-bottom-left-radius: 30%;
+      filter: brightness(1);
+      transform: translate3d(0, 0, 0) rotateY(-180deg) skewY(0deg) scaleX(1);
+    }
+  }
+
+  @keyframes page-flip-backward {
+    0% {
+      filter: brightness(1);
+      transform: translate3d(0, 0, 0) rotateY(0deg) skewY(0deg) scaleX(1);
+    }
+
+    20% {
+      filter: brightness(0.995);
+      transform: translate3d(0.15%, 0, 1px) rotateY(28deg) skewY(0.45deg) scaleX(0.995);
+    }
+
+    48% {
+      filter: brightness(0.985);
+      transform: translate3d(0.8%, -0.15%, 1px) rotateY(84deg) skewY(1.15deg) scaleX(0.94);
+    }
+
+    52% {
+      filter: brightness(0.98);
+      transform: translate3d(0.8%, -0.15%, 1px) rotateY(96deg) skewY(-1deg) scaleX(0.94);
+    }
+
+    80% {
       filter: brightness(0.99);
-      transform: translate3d(2%, -0.5%, 0) skew(2.2deg);
+      transform: translate3d(0.2%, 0, 1px) rotateY(154deg) skewY(-0.4deg) scaleX(0.995);
+    }
+
+    100% {
+      filter: brightness(1);
+      transform: translate3d(0, 0, 0) rotateY(180deg) skewY(0deg) scaleX(1);
+    }
+  }
+
+  @keyframes page-flip-shadow-forward {
+    0%,
+    100% {
+      opacity: 0;
+    }
+
+    46%,
+    54% {
+      opacity: 0.58;
+    }
+  }
+
+  @keyframes page-flip-shadow-backward {
+    0%,
+    100% {
+      opacity: 0;
+    }
+
+    46%,
+    54% {
+      opacity: 0.5;
     }
   }
 
@@ -228,6 +255,11 @@
   @media (prefers-reduced-motion: reduce) {
     .book-page.is-turning-forward,
     .book-page.is-turning-backward {
+      animation: none;
+    }
+
+    .book-page.is-turning-forward::after,
+    .book-page.is-turning-backward::after {
       animation: none;
     }
   }
