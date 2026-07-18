@@ -66,7 +66,15 @@ function initializeNavigation() {
 
   book.addEventListener("pointerdown", (event) => {
     if (event.pointerType === "mouse") return;
+    if (!event.isPrimary) {
+      gestureStart = null;
+      return;
+    }
     gestureStart = { x: event.clientX, y: event.clientY };
+  });
+
+  book.addEventListener("pointercancel", () => {
+    gestureStart = null;
   });
 
   book.addEventListener("pointerup", (event) => {

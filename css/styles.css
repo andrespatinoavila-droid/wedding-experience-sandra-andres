@@ -362,7 +362,7 @@ h1 i {
   overflow: hidden;
   background: var(--ivory);
   box-shadow: 0 1rem 3rem oklch(24% 0.015 90 / 0.13);
-  touch-action: none;
+  touch-action: auto;
   user-select: none;
 }
 
