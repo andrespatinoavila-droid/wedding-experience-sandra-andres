@@ -50,7 +50,7 @@ function scheduleZoomRecovery(delay = 250) {
 }
 
 function syncViewportState() {
-  const zoomActive = isZoomActive();
+  const zoomActive = viewerActive && isZoomActive();
   if (zoomActive) {
     hideControlsForZoom();
   } else {
@@ -69,7 +69,7 @@ function setViewerActive(active) {
   photoViewer.hidden = !active;
   photoViewer.setAttribute("aria-hidden", String(!active));
   book.setAttribute("aria-hidden", String(active));
-  book.setAttribute("aria-disabled", String(active || isZoomActive()));
+  book.setAttribute("aria-disabled", String(active || (viewerActive && isZoomActive())));
 
   if (active) {
     window.setTimeout(() => viewerContinue.focus({ preventScroll: true }), 60);
@@ -172,7 +172,7 @@ function initializeZoomGestureIsolation() {
     event.touches?.length > 1 || isZoomActive();
 
   document
-    .querySelectorAll(".welcome, .thanks, #menu-viewer")
+    .querySelectorAll("#menu-viewer")
     .forEach((surface) => {
       surface.addEventListener(
         "touchstart",

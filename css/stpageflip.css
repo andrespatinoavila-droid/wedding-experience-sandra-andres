@@ -64,6 +64,13 @@
   touch-action: auto;
 }
 
+.book-page.stf__item.welcome,
+.book-page.stf__item.thanks {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .book-page.stf__item > .page-content {
   position: absolute;
   top: 50%;

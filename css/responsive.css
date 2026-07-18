@@ -163,14 +163,17 @@
     gap: clamp(0.45rem, 1.2vh, 0.7rem);
     margin-bottom: clamp(0.75rem, 2vh, 1.25rem);
     line-height: 1.42;
+    opacity: 1;
   }
 
   .thanks__message-primary {
     font-size: 1.15rem;
+    opacity: 0.82;
   }
 
   .thanks__message-secondary {
     font-size: 1.1rem;
+    opacity: 0.92;
   }
 
   .thanks__names,
