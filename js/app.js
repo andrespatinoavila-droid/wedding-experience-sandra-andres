@@ -8,7 +8,8 @@ const menuCanvas = menuViewer?.querySelector(".menu-viewer__canvas");
 const officialMenu = document.querySelector("#official-menu");
 
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
-const turnDuration = 780;
+const desktopTurnDuration = 780;
+const mobileTurnDuration = 1200;
 let currentPage = 0;
 let isTurning = false;
 let gestureStart = null;
@@ -71,7 +72,11 @@ function goToPage(targetPage) {
     leavingPage.classList.remove("is-turning");
     isTurning = false;
     pages[currentPage].querySelector(".page-control")?.focus({ preventScroll: true });
-  }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 230 : turnDuration);
+  }, window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? 230
+    : window.matchMedia("(max-width: 47.99rem)").matches
+      ? mobileTurnDuration
+      : desktopTurnDuration);
 }
 
 function renderMenuZoom() {
