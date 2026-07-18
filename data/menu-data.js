@@ -1,0 +1,94 @@
+/**
+ * Datos del menú compatibles con file:// y GitHub Pages.
+ *
+ * Este archivo evita depender de fetch(), que los navegadores bloquean cuando
+ * index.html se abre mediante doble clic. menu.json se conserva como respaldo
+ * editable y debe mantenerse sincronizado con este objeto.
+ */
+window.WEDDING_MENU_DATA = {
+  "introduction": "Cada plato fue elegido con cariño para acompañar esta noche junto a ustedes.",
+  "categories": [
+    {
+      "slug": "entradas",
+      "name": "Entradas",
+      "items": [
+        {
+          "name": "Sopa de Cebolla Gratinada",
+          "description": "Cebollas en reducción de vino tinto y salsa de carne, sobre una tostada con queso gratinado."
+        },
+        {
+          "name": "Tartar de Salmón sobre Rosti",
+          "description": "Rodajas de salmón salteadas en sal y pimienta con alcaparras sobre nuestra tradicional papa rosti suiza."
+        },
+        {
+          "name": "Tartiflette",
+          "description": "Plato franco-suizo: patatas cortadas en rodajas finas con trozos de tocineta y nuestro queso cremoso suizo, gratinado."
+        }
+      ]
+    },
+    {
+      "slug": "carnes",
+      "name": "Carnes",
+      "items": [
+        {
+          "name": "Filet Mignon",
+          "description": "Medallones de res a la parrilla, cada uno recubierto con tocineta y salteados en salsa de champiñones a base de vino tinto."
+        },
+        {
+          "name": "New York Steak",
+          "description": "320 g de lomo de res, en corte firme y marmoleado, caracterizado por su jugosidad y ternura."
+        }
+      ]
+    },
+    {
+      "slug": "cerdo",
+      "name": "Cerdo",
+      "items": [
+        {
+          "name": "Costillas de Cerdo en Flor de Jamaica",
+          "description": "Rack de costillas de cerdo al horno de leña, cocinadas en nuestra sal gruesa con salsa a elección: BBQ, mandarina o teriyaki."
+        }
+      ]
+    },
+    {
+      "slug": "pollo",
+      "name": "Pollo",
+      "items": [
+        {
+          "name": "Lombarda de Pollo",
+          "description": "Pollo a la parrilla, salteado en una salsa con reducción de vino tinto suizo, tocineta y champiñones."
+        }
+      ]
+    },
+    {
+      "slug": "mar",
+      "name": "Platos de Mar",
+      "shortName": "Mar",
+      "items": [
+        {
+          "name": "Arroz Waldorf",
+          "description": "Arroz blanco con variedad de frutos del mar — almejas, mejillones, róbalo, camarones, salmón y corvina — en salsa española, acompañado de hojaldres de plátano."
+        },
+        {
+          "name": "Salmón Wolford",
+          "description": "Filete de salmón a la parrilla salteado en frutos del mar, con salsa marinera de la casa, camarones y calamar."
+        },
+        {
+          "name": "Corvina Bretona",
+          "description": "Filete de corvina a la parrilla en una suave salsa al ajillo, con camarón y champiñones flambeados."
+        }
+      ]
+    },
+    {
+      "slug": "especialidad",
+      "name": "Especialidad de la Casa",
+      "shortName": "Especialidad",
+      "items": [
+        {
+          "name": "Piña Rellena al Pomodoro",
+          "description": "Media piña rellena de julianas de pollo y camarones, salteadas en nuestra salsa pomodoro con quesos suizos."
+        }
+      ]
+    }
+  ]
+};

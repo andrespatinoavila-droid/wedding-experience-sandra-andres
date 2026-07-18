@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, user-scalable=yes">
+    <meta name="description" content="Experiencia de boda de Sandra Bonilla y Andrés Patiño.">
+    <title>Sandra & Andrés · Nuestra celebración</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Karla:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <script src="js/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#page-menu">Ir al menú</a>
+
+    <main id="wedding-book" class="book" aria-label="Libro digital de nuestra boda">
+      <!-- Página 1: portada -->
+      <section
+        id="page-cover"
+        class="book-page welcome is-active"
+        data-page="0"
+        aria-labelledby="couple-names"
+        aria-hidden="false"
+      >
+        <div class="botanical botanical--top" aria-hidden="true"></div>
+
+        <div class="welcome__content page-content">
+          <p class="kicker">Nuestra celebración</p>
+
+          <div class="monogram" aria-label="Monograma de Sandra y Andrés">
+            <span>S</span>
+            <i aria-hidden="true">|</i>
+            <span>A</span>
+          </div>
+
+          <h1 id="couple-names">Sandra Bonilla <i>&amp;</i> Andrés Patiño</h1>
+          <p class="date">08 de agosto de 2026</p>
+
+          <div class="ornament" aria-hidden="true"><span></span><i></i><span></span></div>
+
+          <p class="welcome__message">
+            Hoy queremos compartir con ustedes uno de los días más importantes de nuestras vidas.
+            <br><br>
+            Gracias por acompañarnos y por hacer parte de esta celebración.
+            <br><br>
+            Hemos preparado este menú con mucho cariño para ustedes.
+          </p>
+        </div>
+
+        <button class="page-control page-control--next page-control--hint" type="button" data-action="next" aria-label="Ver menú">
+          <span>Ver menú</span>
+          <i aria-hidden="true">→</i>
+        </button>
+
+        <div class="botanical botanical--bottom" aria-hidden="true"></div>
+      </section>
+
+      <!-- Página 2: imagen oficial sin reconstrucción -->
+      <section
+        id="page-menu"
+        class="book-page menu-page is-next"
+        data-page="1"
+        aria-label="Menú oficial de la boda"
+        aria-hidden="true"
+        inert
+      >
+        <button class="page-control page-control--previous" type="button" data-action="previous" aria-label="Regresar a la portada">
+          <i aria-hidden="true">←</i>
+          <span>Portada</span>
+        </button>
+
+        <div id="menu-viewer" class="menu-viewer page-content">
+          <div class="menu-viewer__canvas">
+            <img
+              id="official-menu"
+              class="official-menu"
+              src="img/menu/menu-oficial.png"
+              alt="Menú oficial de la boda de Sandra Bonilla y Andrés Patiño"
+              width="1024"
+              height="1536"
+              draggable="false"
+            >
+          </div>
+        </div>
+
+        <button class="page-control page-control--next" type="button" data-action="next" aria-label="Ver mensaje final">
+          <span>Ver mensaje final</span>
+          <i aria-hidden="true">→</i>
+        </button>
+      </section>
+
+      <!-- Página 3: agradecimiento -->
+      <footer
+        id="page-thanks"
+        class="book-page thanks is-next"
+        data-page="2"
+        aria-labelledby="thanks-title"
+        aria-hidden="true"
+        inert
+      >
+        <button class="page-control page-control--previous page-control--light" type="button" data-action="previous" aria-label="Regresar al menú">
+          <i aria-hidden="true">←</i>
+          <span>Menú</span>
+        </button>
+
+        <div class="thanks__content page-content">
+          <div class="ornament ornament--light" aria-hidden="true"><span></span><i></i><span></span></div>
+          <h2 id="thanks-title">Gracias</h2>
+          <p class="thanks__message">
+            Gracias por compartir este momento con nosotros.
+            <br><br>
+            Esperamos que esta noche quede para siempre en sus corazones, así como ustedes quedarán para siempre en el nuestro.
+          </p>
+          <p class="thanks__names">Sandra Bonilla &amp; Andrés Patiño</p>
+          <p class="thanks__date">08 de agosto de 2026</p>
+        </div>
+      </footer>
+    </main>
+
+    <p id="page-status" class="visually-hidden" aria-live="polite">Portada</p>
+  </body>
+</html>

@@ -1,0 +1,84 @@
+/* Tablet */
+@media (min-width: 48rem) {
+  .book-page {
+    padding: 4.5rem 3rem;
+  }
+
+  .botanical {
+    width: 12rem;
+    height: 17rem;
+  }
+
+  .page-control {
+    right: 0.75rem;
+    left: auto;
+    padding: 1.2rem 0.65rem;
+    font-size: 0.65rem;
+  }
+
+  .page-control--previous {
+    right: auto;
+    left: 0.75rem;
+  }
+
+  .menu-page {
+    padding: 2rem 5rem;
+  }
+}
+
+/* Escritorio */
+@media (min-width: 64rem) {
+  .book {
+    max-width: 90rem;
+    margin: 0 auto;
+    box-shadow: 0 0 5rem oklch(15% 0.02 135 / 0.32);
+  }
+
+  .book-page {
+    border-right: 1px solid oklch(60% 0.11 75 / 0.15);
+    border-left: 1px solid oklch(60% 0.11 75 / 0.15);
+  }
+
+  .page-control--next {
+    right: 1.4rem;
+  }
+
+  .page-control--previous {
+    left: 1.4rem;
+  }
+
+  .menu-viewer {
+    width: min(72vw, calc((100svh - 4rem) * 0.6667), 64rem);
+  }
+}
+
+/* Teléfonos de poca altura */
+@media (max-height: 42rem) {
+  .book-page {
+    padding-top: 1.35rem;
+    padding-bottom: 1.35rem;
+  }
+
+  .kicker {
+    margin-bottom: 0.75rem;
+  }
+
+  .monogram {
+    margin-bottom: 0.65rem;
+    font-size: 3rem;
+  }
+
+  .date,
+  .ornament {
+    margin-bottom: 0.85rem;
+  }
+
+  .welcome__message {
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .thanks__message {
+    margin-bottom: 1.25rem;
+  }
+}
