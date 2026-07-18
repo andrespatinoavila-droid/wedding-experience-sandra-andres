@@ -14,15 +14,48 @@ let previousControl = null;
 let nextControl = null;
 let stableViewportHeight = window.innerHeight;
 let viewerActive = false;
+let activeTouchCount = 0;
+let lastTouchInteraction = 0;
+let zoomRestoreTimer = null;
+
+const NORMAL_SCALE_LIMIT = 1.02;
+
+function currentViewportScale() {
+  return window.visualViewport?.scale || 1;
+}
 
 function isZoomActive() {
-  return (window.visualViewport?.scale || 1) > 1.01;
+  return currentViewportScale() > NORMAL_SCALE_LIMIT;
+}
+
+function hideControlsForZoom() {
+  window.clearTimeout(zoomRestoreTimer);
+  if (!document.body.classList.contains("is-zoomed")) {
+    lastTouchInteraction = Date.now();
+  }
+  document.body.classList.add("is-zoomed");
+  book.setAttribute("aria-disabled", "true");
+}
+
+function restoreControlsAfterZoom() {
+  if (isZoomActive() || activeTouchCount > 0) return;
+  document.body.classList.remove("is-zoomed");
+  zoomGestureLocked = false;
+  book.setAttribute("aria-disabled", String(viewerActive));
+}
+
+function scheduleZoomRecovery(delay = 250) {
+  window.clearTimeout(zoomRestoreTimer);
+  zoomRestoreTimer = window.setTimeout(restoreControlsAfterZoom, delay);
 }
 
 function syncViewportState() {
   const zoomActive = isZoomActive();
-  document.body.classList.toggle("is-zoomed", zoomActive);
-  book.setAttribute("aria-disabled", String(zoomActive || viewerActive));
+  if (zoomActive) {
+    hideControlsForZoom();
+  } else {
+    scheduleZoomRecovery();
+  }
 
   if (!zoomActive) {
     stableViewportHeight = window.visualViewport?.height || window.innerHeight;
@@ -144,8 +177,11 @@ function initializeZoomGestureIsolation() {
       surface.addEventListener(
         "touchstart",
         (event) => {
+          activeTouchCount = event.touches.length;
+          lastTouchInteraction = Date.now();
           if (shouldLockZoomGesture(event)) {
             zoomGestureLocked = true;
+            hideControlsForZoom();
             event.stopPropagation();
           }
         },
@@ -155,6 +191,8 @@ function initializeZoomGestureIsolation() {
       surface.addEventListener(
         "touchmove",
         (event) => {
+          activeTouchCount = event.touches.length;
+          lastTouchInteraction = Date.now();
           if (zoomGestureLocked || shouldLockZoomGesture(event)) {
             zoomGestureLocked = true;
             event.stopPropagation();
@@ -166,12 +204,12 @@ function initializeZoomGestureIsolation() {
       surface.addEventListener(
         "touchend",
         (event) => {
+          activeTouchCount = event.touches.length;
+          lastTouchInteraction = Date.now();
           if (!zoomGestureLocked) return;
           event.stopPropagation();
           if (event.touches.length === 0) {
-            window.setTimeout(() => {
-              zoomGestureLocked = isZoomActive();
-            }, 80);
+            scheduleZoomRecovery();
           }
         },
         { capture: true, passive: true }
@@ -180,8 +218,10 @@ function initializeZoomGestureIsolation() {
       surface.addEventListener(
         "touchcancel",
         (event) => {
+          activeTouchCount = 0;
+          lastTouchInteraction = Date.now();
           if (zoomGestureLocked) event.stopPropagation();
-          zoomGestureLocked = false;
+          scheduleZoomRecovery();
         },
         { capture: true, passive: true }
       );
@@ -234,4 +274,15 @@ syncViewportState();
 window.addEventListener("resize", syncViewportState, { passive: true });
 window.visualViewport?.addEventListener("resize", syncViewportState, { passive: true });
 window.visualViewport?.addEventListener("scroll", syncViewportState, { passive: true });
+window.setInterval(() => {
+  const idleFor = Date.now() - lastTouchInteraction;
+  if (
+    document.body.classList.contains("is-zoomed") &&
+    !isZoomActive() &&
+    activeTouchCount === 0 &&
+    idleFor >= 2000
+  ) {
+    restoreControlsAfterZoom();
+  }
+}, 500);
 initializePageFlip();
