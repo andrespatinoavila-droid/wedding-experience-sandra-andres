@@ -15,11 +15,14 @@ const viewerSurfaces = [
 
 const NORMAL_SCALE_LIMIT = 1.02;
 const CONTROL_RESTORE_DELAY = 320;
-const IDLE_RECOVERY_DELAY = 2000;
 const DOUBLE_TAP_DELAY = 320;
 const MOBILE_CONTROLS_ONLY =
   window.matchMedia("(pointer: coarse)").matches ||
   navigator.maxTouchPoints > 0;
+const DEBUG_MODE = new URLSearchParams(window.location.search).get("debug") === "1";
+const panzoomInstances = new Map();
+const wheelHandlers = new Map();
+const debugEntries = [];
 
 let pageFlip = null;
 let pageFlipInputSuspended = false;
@@ -35,12 +38,50 @@ let viewerScale = 1;
 let viewerPosition = { x: 0, y: 0 };
 let activePointers = new Set();
 let controlsRestoreTimer = null;
-let idleRecoveryTimer = null;
 let viewportResetTimer = null;
 let lastTap = { time: 0, surface: null };
 let suppressDoubleClickUntil = 0;
-let lastInteractionAt = Date.now();
-let activeWheelHandler = null;
+
+function debugLog(type, detail = {}) {
+  if (!DEBUG_MODE) return;
+  const entry = {
+    at: new Date().toISOString().slice(11, 23),
+    type,
+    scale: Number(viewerScale.toFixed(3)),
+    x: Number(viewerPosition.x.toFixed(2)),
+    y: Number(viewerPosition.y.toFixed(2)),
+    ...detail,
+  };
+  debugEntries.push(entry);
+  if (debugEntries.length > 24) debugEntries.shift();
+  let panel = document.querySelector("#viewer-debug-panel");
+  if (!panel) {
+    panel = document.createElement("pre");
+    panel.id = "viewer-debug-panel";
+    panel.setAttribute("aria-label", "Registro de depuración del visor");
+    Object.assign(panel.style, {
+      position: "fixed",
+      zIndex: "5000",
+      top: "0",
+      left: "0",
+      width: "100%",
+      maxHeight: "34vh",
+      margin: "0",
+      padding: "0.45rem",
+      overflow: "auto",
+      background: "rgba(0,0,0,.82)",
+      color: "#9fffa0",
+      font: "10px/1.25 monospace",
+      pointerEvents: "none",
+      whiteSpace: "pre-wrap",
+    });
+    document.body.append(panel);
+  }
+  panel.textContent = debugEntries
+    .map((item) => `${item.at} ${item.type} s=${item.scale} x=${item.x} y=${item.y}`)
+    .join("\n");
+  console.debug("[viewer]", entry);
+}
 
 function isZoomActive() {
   return viewerScale > NORMAL_SCALE_LIMIT;
@@ -98,6 +139,7 @@ function syncScaleState(scale) {
 
   if (isZoomActive() || panzoomGestureActive || activePointers.size > 1) {
     window.clearTimeout(controlsRestoreTimer);
+    window.clearTimeout(viewportResetTimer);
     setNavigationLocked(true);
     return;
   }
@@ -109,14 +151,25 @@ function syncScaleState(scale) {
  * Única ruta de recuperación para las tres vistas.
  * Restablece el mismo motor, su escala, traslación, gestos y navegación.
  */
-function resetViewerState({ animate = false } = {}) {
+function resetViewerState({
+  animate = false,
+  force = false,
+  reason = "unspecified",
+} = {}) {
+  if (isZoomActive() && !force) {
+    debugLog("reset-blocked", { reason });
+    return false;
+  }
+
+  debugLog("resetViewerState", { reason, force });
   window.clearTimeout(controlsRestoreTimer);
-  window.clearTimeout(idleRecoveryTimer);
+  window.clearTimeout(viewportResetTimer);
   activePointers.clear();
   panzoomGestureActive = false;
   lastTap = { time: 0, surface: null };
 
   if (panzoom) {
+    debugLog("panzoom.reset", { reason });
     panzoom.reset({ animate });
   }
 
@@ -125,100 +178,55 @@ function resetViewerState({ animate = false } = {}) {
   setNavigationLocked(false);
   setAppHeight();
   scheduleControlsRestore();
-}
-
-function registerIdleRecovery() {
-  window.clearTimeout(idleRecoveryTimer);
-  idleRecoveryTimer = window.setTimeout(() => {
-    const idleFor = Date.now() - lastInteractionAt;
-    if (idleFor >= IDLE_RECOVERY_DELAY && viewerScale <= NORMAL_SCALE_LIMIT) {
-      resetViewerState({ animate: false });
-    }
-  }, IDLE_RECOVERY_DELAY + 80);
+  return true;
 }
 
 function noteInteraction() {
-  lastInteractionAt = Date.now();
-  registerIdleRecovery();
-}
-
-function clampPanToVisibleBounds(x, y, scale) {
-  if (!activeSurface || !activeSurfaceParent || scale <= 1) {
-    return { x: 0, y: 0 };
-  }
-
-  const surfaceRect = activeSurface.getBoundingClientRect();
-  const parentRect = activeSurfaceParent.getBoundingClientRect();
-  const baseWidth = surfaceRect.width / scale;
-  const baseHeight = surfaceRect.height / scale;
-  const maxX = Math.max(0, (baseWidth * scale - parentRect.width) / (2 * scale));
-  const maxY = Math.max(0, (baseHeight * scale - parentRect.height) / (2 * scale));
-
-  return {
-    x: Math.max(-maxX, Math.min(maxX, x)),
-    y: Math.max(-maxY, Math.min(maxY, y)),
-  };
+  // Panzoom conserva el estado. No existe recuperación automática por inactividad.
 }
 
 function handlePanzoomChange(event) {
+  if (event.currentTarget !== activeSurface) return;
   const scale = Number(event.detail?.scale) || 1;
-  const requestedPosition = {
+  viewerPosition = {
     x: Number(event.detail?.x) || 0,
     y: Number(event.detail?.y) || 0,
   };
-  const boundedPosition = clampPanToVisibleBounds(
-    requestedPosition.x,
-    requestedPosition.y,
-    scale
-  );
-
-  if (
-    panzoom &&
-    (Math.abs(boundedPosition.x - requestedPosition.x) > 0.01 ||
-      Math.abs(boundedPosition.y - requestedPosition.y) > 0.01)
-  ) {
-    panzoom.pan(boundedPosition.x, boundedPosition.y, {
-      animate: false,
-      silent: true,
-    });
-  }
-
-  viewerPosition = boundedPosition;
   syncScaleState(scale);
+  debugLog("panzoomchange");
   noteInteraction();
 }
 
-function handlePanzoomStart() {
+function handlePanzoomStart(event) {
+  if (event.currentTarget !== activeSurface) return;
   panzoomGestureActive = true;
   setNavigationLocked(true);
+  debugLog("panzoomstart");
   noteInteraction();
 }
 
-function handlePanzoomEnd() {
+function handlePanzoomEnd(event) {
+  if (event.currentTarget !== activeSurface) return;
   panzoomGestureActive = false;
+  debugLog("panzoomend");
   noteInteraction();
   if (!isZoomActive()) scheduleControlsRestore();
-}
-
-function removeActiveViewerListeners() {
-  if (!activeSurface) return;
-  activeSurface.removeEventListener("panzoomchange", handlePanzoomChange);
-  activeSurface.removeEventListener("panzoomstart", handlePanzoomStart);
-  activeSurface.removeEventListener("panzoomend", handlePanzoomEnd);
-  if (activeSurfaceParent && activeWheelHandler) {
-    activeSurfaceParent.removeEventListener("wheel", activeWheelHandler);
-  }
-  activeWheelHandler = null;
 }
 
 function toggleViewerZoom(event) {
   if (!panzoom) return;
 
   if (isZoomActive()) {
-    resetViewerState({ animate: true });
+    debugLog("doubletap-reset");
+    resetViewerState({
+      animate: true,
+      force: true,
+      reason: "explicit-double-tap",
+    });
     return;
   }
 
+  debugLog("doubletap-zoom");
   panzoom.zoom(2, { animate: true });
 }
 
@@ -228,50 +236,67 @@ function activateViewerEngine(pageIndex) {
     throw new Error("El visor Panzoom no está disponible.");
   }
 
-  resetViewerState({ animate: false });
-  removeActiveViewerListeners();
-  panzoom?.destroy();
+  if (activeSurface === surface && isZoomActive()) {
+    debugLog("activate-blocked-during-zoom", { pageIndex });
+    return;
+  }
+
+  if (
+    activeSurface &&
+    !resetViewerState({ animate: false, reason: "before-view-transition" })
+  ) {
+    return;
+  }
 
   activeSurface = surface;
   activeSurfaceParent = surface.parentElement;
   document.body.dataset.viewerEnginePage = String(pageIndex);
-  panzoom = window.Panzoom(surface, {
-    startScale: 1,
-    minScale: 1,
-    maxScale: 5,
-    step: 0.35,
-    canvas: false,
-    disablePan: false,
-    disableZoom: false,
-    pinchAndPan: true,
-    panOnlyWhenZoomed: true,
-    animate: false,
-    duration: 220,
-    easing: "ease-out",
-    cursor: "default",
-  });
+  panzoom = panzoomInstances.get(surface);
 
-  activeSurface.addEventListener("panzoomchange", handlePanzoomChange);
-  activeSurface.addEventListener("panzoomstart", handlePanzoomStart);
-  activeSurface.addEventListener("panzoomend", handlePanzoomEnd);
+  if (!panzoom) {
+    panzoom = window.Panzoom(surface, {
+      startScale: 1,
+      minScale: 1,
+      maxScale: 5,
+      step: 0.35,
+      canvas: false,
+      contain: false,
+      disablePan: false,
+      disableZoom: false,
+      pinchAndPan: true,
+      panOnlyWhenZoomed: true,
+      animate: false,
+      cursor: "default",
+    });
+    panzoomInstances.set(surface, panzoom);
 
-  activeSurfaceParent.style.touchAction = "none";
-  activeWheelHandler = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    panzoomGestureActive = true;
-    setNavigationLocked(true);
-    panzoom.zoomWithWheel(event);
-    window.clearTimeout(controlsRestoreTimer);
-    controlsRestoreTimer = window.setTimeout(() => {
-      panzoomGestureActive = false;
-      if (!isZoomActive()) scheduleControlsRestore();
-    }, CONTROL_RESTORE_DELAY);
-  };
-  activeSurfaceParent.addEventListener("wheel", activeWheelHandler, {
-    passive: false,
-  });
-  resetViewerState({ animate: false });
+    surface.addEventListener("panzoomchange", handlePanzoomChange);
+    surface.addEventListener("panzoomstart", handlePanzoomStart);
+    surface.addEventListener("panzoomend", handlePanzoomEnd);
+
+    activeSurfaceParent.style.touchAction = "none";
+    const instance = panzoom;
+    const wheelHandler = (event) => {
+      if (surface !== activeSurface) return;
+      event.preventDefault();
+      event.stopPropagation();
+      panzoomGestureActive = true;
+      setNavigationLocked(true);
+      debugLog("wheel");
+      instance.zoomWithWheel(event);
+      window.clearTimeout(controlsRestoreTimer);
+      controlsRestoreTimer = window.setTimeout(() => {
+        panzoomGestureActive = false;
+        if (!isZoomActive()) scheduleControlsRestore();
+      }, CONTROL_RESTORE_DELAY);
+    };
+    wheelHandlers.set(surface, wheelHandler);
+    activeSurfaceParent.addEventListener("wheel", wheelHandler, {
+      passive: false,
+    });
+  }
+
+  resetViewerState({ animate: false, reason: "enter-view-at-normal-scale" });
   window.__weddingViewer = {
     get instance() {
       return panzoom;
@@ -296,6 +321,7 @@ function initializeSurfaceGestures() {
       (event) => {
         if (surface !== activeSurface) return;
         activePointers.add(event.pointerId);
+        debugLog("pointerdown", { pointerId: event.pointerId });
         noteInteraction();
         if (activePointers.size > 1) {
           panzoomGestureActive = true;
@@ -311,6 +337,7 @@ function initializeSurfaceGestures() {
       "pointermove",
       (event) => {
         if (surface !== activeSurface) return;
+        debugLog("pointermove", { pointerId: event.pointerId });
         noteInteraction();
       },
       { capture: true }
@@ -321,6 +348,7 @@ function initializeSurfaceGestures() {
       (event) => {
         if (surface !== activeSurface) return;
         activePointers.delete(event.pointerId);
+        debugLog("pointerup", { pointerId: event.pointerId });
         noteInteraction();
 
         if (event.pointerType === "touch") {
@@ -351,6 +379,7 @@ function initializeSurfaceGestures() {
       "touchstart",
       (event) => {
         if (surface !== activeSurface || event.touches.length < 2) return;
+        debugLog("touchstart", { touches: event.touches.length });
         panzoomGestureActive = true;
         setNavigationLocked(true);
         event.preventDefault();
@@ -363,6 +392,7 @@ function initializeSurfaceGestures() {
       "touchmove",
       (event) => {
         if (surface !== activeSurface) return;
+        debugLog("touchmove", { touches: event.touches.length });
         noteInteraction();
       },
       { capture: true, passive: false }
@@ -373,6 +403,7 @@ function initializeSurfaceGestures() {
         eventName,
         (event) => {
           if (surface !== activeSurface) return;
+          debugLog(eventName);
           panzoomGestureActive = true;
           setNavigationLocked(true);
           event.preventDefault();
@@ -386,6 +417,7 @@ function initializeSurfaceGestures() {
       "gestureend",
       (event) => {
         if (surface !== activeSurface) return;
+        debugLog("gestureend");
         event.preventDefault();
         event.stopPropagation();
         panzoomGestureActive = false;
@@ -398,6 +430,7 @@ function initializeSurfaceGestures() {
       "pointercancel",
       (event) => {
         if (surface !== activeSurface) return;
+        debugLog("pointercancel", { pointerId: event.pointerId });
         event.stopPropagation();
         activePointers.delete(event.pointerId);
         panzoomGestureActive = false;
@@ -409,6 +442,31 @@ function initializeSurfaceGestures() {
         }
       },
       { capture: true }
+    );
+
+    surface.addEventListener(
+      "touchend",
+      (event) => {
+        if (surface !== activeSurface) return;
+        debugLog("touchend", { touches: event.touches.length });
+      },
+      { capture: true, passive: true }
+    );
+
+    surface.addEventListener(
+      "touchcancel",
+      (event) => {
+        if (surface !== activeSurface) return;
+        debugLog("touchcancel", { touches: event.touches.length });
+        activePointers.clear();
+        panzoomGestureActive = false;
+        if (isZoomActive()) {
+          setNavigationLocked(true);
+        } else {
+          scheduleControlsRestore();
+        }
+      },
+      { capture: true, passive: true }
     );
 
     surface.addEventListener("dblclick", (event) => {
@@ -487,7 +545,7 @@ function initializeControls() {
     event.preventDefault();
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
-    resetViewerState({ animate: false });
+    resetViewerState({ animate: false, reason: "next-control" });
     pageFlip.flipNext("bottom");
   });
   document.body.append(nextControl);
@@ -502,7 +560,7 @@ function initializeControls() {
     event.preventDefault();
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
-    resetViewerState({ animate: false });
+    resetViewerState({ animate: false, reason: "previous-control" });
     pageFlip.turnToPrevPage();
   });
   document.body.append(previousControl);
@@ -511,7 +569,7 @@ function initializeControls() {
     event.preventDefault();
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
-    resetViewerState({ animate: false });
+    resetViewerState({ animate: false, reason: "continue-control" });
     setViewerActive(false);
     window.requestAnimationFrame(() => pageFlip.flipNext("bottom"));
   });
@@ -521,7 +579,7 @@ function initializeControls() {
     event.stopPropagation();
     if (!pageFlip || isZoomActive()) return;
 
-    resetViewerState({ animate: false });
+    resetViewerState({ animate: false, reason: "cover-control" });
     document.body.classList.add("viewer-returning");
     window.setTimeout(() => {
       document.body.classList.remove("viewer-returning");
@@ -533,7 +591,7 @@ function initializeControls() {
   document.querySelector(".skip-link")?.addEventListener("click", (event) => {
     event.preventDefault();
     if (!pageFlip || isZoomActive()) return;
-    resetViewerState({ animate: false });
+    resetViewerState({ animate: false, reason: "skip-link" });
     pageFlip.flip(1, "bottom");
   });
 }
@@ -584,22 +642,40 @@ function initializePageFlip() {
 }
 
 function handleViewportResize() {
+  debugLog("visualViewport.resize", {
+    width: window.visualViewport?.width || window.innerWidth,
+    height: window.visualViewport?.height || window.innerHeight,
+  });
   if (isZoomActive() || panzoomGestureActive || activePointers.size > 0) {
+    window.clearTimeout(viewportResetTimer);
     return;
   }
 
   setAppHeight();
   window.clearTimeout(viewportResetTimer);
   viewportResetTimer = window.setTimeout(() => {
-    resetViewerState({ animate: false });
+    if (isZoomActive() || panzoomGestureActive || activePointers.size > 0) {
+      debugLog("viewport-reset-blocked");
+      return;
+    }
+    resetViewerState({ animate: false, reason: "viewport-normal-scale" });
   }, 120);
 }
 
 function handleOrientationChange() {
+  debugLog("orientationchange");
+  if (isZoomActive() || panzoomGestureActive || activePointers.size > 0) {
+    window.clearTimeout(viewportResetTimer);
+    return;
+  }
   setAppHeight();
   window.clearTimeout(viewportResetTimer);
   viewportResetTimer = window.setTimeout(() => {
-    resetViewerState({ animate: false });
+    if (isZoomActive() || panzoomGestureActive || activePointers.size > 0) {
+      debugLog("orientation-reset-blocked");
+      return;
+    }
+    resetViewerState({ animate: false, reason: "orientation-normal-scale" });
   }, 120);
 }
 
