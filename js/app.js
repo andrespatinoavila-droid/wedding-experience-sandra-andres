@@ -7,6 +7,7 @@ const menuControls = document.querySelector("#menu-photo-viewer");
 const viewerContinue = document.querySelector("#viewer-continue");
 const viewerCover = document.querySelector("#viewer-cover");
 const skipLink = document.querySelector(".skip-link");
+const bookPageImages = [...document.querySelectorAll(".book-page__image")];
 
 const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
 const pageImages = [
@@ -42,6 +43,34 @@ let previousControl = null;
 let nextControl = null;
 let currentPageIndex = 0;
 let transitionInProgress = false;
+let bookImagesReady = false;
+
+async function decodeBookImage(image) {
+  if (!image.complete) {
+    await new Promise((resolve, reject) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", reject, { once: true });
+    });
+  }
+
+  if (typeof image.decode === "function") {
+    try {
+      await image.decode();
+    } catch {
+      // Safari puede resolver load y rechazar decode aunque la imagen sea válida.
+    }
+  }
+
+  if (!image.naturalWidth || !image.naturalHeight) {
+    throw new Error(`No fue posible precargar ${image.currentSrc || image.src}`);
+  }
+}
+
+async function preloadBookImages() {
+  await Promise.all(bookPageImages.map(decodeBookImage));
+  bookImagesReady = true;
+  document.documentElement.classList.add("book-images-ready");
+}
 
 function setAppHeight() {
   const height = window.visualViewport?.height || window.innerHeight;
@@ -194,7 +223,14 @@ function updatePageStatus(pageIndex) {
 }
 
 function beginPageTransition(action, { returningFromMenu = false } = {}) {
-  if (!pageFlip || transitionInProgress || isViewerZoomed()) return;
+  if (
+    !pageFlip ||
+    !bookImagesReady ||
+    transitionInProgress ||
+    isViewerZoomed()
+  ) {
+    return;
+  }
   transitionInProgress = true;
   book.setAttribute("aria-disabled", "true");
   suspendPageFlipInput();
@@ -311,4 +347,5 @@ window.visualViewport?.addEventListener("resize", setAppHeight, {
   passive: true,
 });
 
+await preloadBookImages();
 initializePageFlip();
