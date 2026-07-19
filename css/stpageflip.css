@@ -221,6 +221,12 @@
   background: var(--ivory);
 }
 
+body[data-current-page="0"] .pswp__bg {
+  background:
+    radial-gradient(circle at 50% 45%, var(--ivory) 0 38%, transparent 70%),
+    linear-gradient(145deg, var(--ivory-deep), var(--ivory) 42%, var(--ivory-deep));
+}
+
 body[data-current-page="2"] .pswp__bg {
   background: var(--olive-dark);
 }
@@ -368,7 +374,7 @@ body[data-current-page="2"] .book-control::before {
 
   .book-page.stf__item.welcome > .viewer-surface > .welcome__content {
     top: calc(
-      50% - 11vh +
+      50% - 5vh +
       env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
     );
     width: min(100%, 23rem);
@@ -384,7 +390,7 @@ body[data-current-page="2"] .book-control::before {
 
   .book-page.stf__item.thanks > .viewer-surface > .thanks__content {
     top: calc(
-      50% - 10vh +
+      50% +
       env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
     );
     width: min(calc(100% - 2rem), 23rem);
