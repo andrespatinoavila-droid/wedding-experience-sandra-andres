@@ -261,23 +261,29 @@ body[data-current-page="0"] .pswp__bg {
     linear-gradient(145deg, var(--ivory-deep), var(--ivory) 42%, var(--ivory-deep));
 }
 
-body[data-current-page="0"] .pswp__img {
-  outline: 2px solid rgb(249 244 234);
-  outline-offset: -1px;
-}
-
 body[data-current-page="2"] .pswp__bg {
   background: var(--olive-dark);
 }
 
-body[data-current-page="2"] .pswp__img {
-  outline: 2px solid rgb(37 50 30);
-  outline-offset: -1px;
-}
-
 .pswp__img {
+  box-sizing: border-box;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
   -webkit-user-drag: none;
   user-select: none;
+}
+
+body[data-current-page="0"] .pswp__img {
+  padding-right: 1px;
+  padding-left: 1px;
+  background: rgb(249 244 234);
+}
+
+body[data-current-page="2"] .pswp__img {
+  padding-right: 1px;
+  padding-left: 1px;
+  background: rgb(37 50 30);
 }
 
 .menu-controls[hidden] {
