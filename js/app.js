@@ -1,7 +1,7 @@
 import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
-} from "./experience-config.js?v=20260719-desktop-profile-1";
+} from "./experience-config.js?v=1.0.0";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
@@ -39,22 +39,17 @@ const pageImages = [
 ];
 
 const NORMAL_ZOOM_TOLERANCE = 1.02;
-const GEOMETRY_DEBUG =
-  new URLSearchParams(window.location.search).get("debug") === "1";
 
 let pageFlip = null;
 let pageFlipInputSuspended = false;
 let photoSwipe = null;
 let previousControl = null;
 let nextControl = null;
-let currentPageIndex = 0;
 let transitionInProgress = false;
 let bookImagesReady = false;
 let pendingPageIndex = null;
 let pageActivationFrame = null;
 let deferredViewportSync = false;
-let geometryDebugPanel = null;
-let geometryDebugHistory = [];
 
 async function decodeBookImage(image) {
   if (!image.complete) {
@@ -94,167 +89,6 @@ function setAppHeight(options = {}) {
   const height = window.visualViewport?.height || window.innerHeight;
   document.documentElement.style.setProperty("--app-height", `${height}px`);
   deferredViewportSync = false;
-}
-
-function getImageRenderSnapshot(image) {
-  if (!image) return null;
-
-  const rect = image.getBoundingClientRect();
-  const style = getComputedStyle(image);
-  const cssWidth = Number.parseFloat(style.width) || rect.width;
-  const cssHeight = Number.parseFloat(style.height) || rect.height;
-  const naturalWidth = image.naturalWidth || 0;
-  const naturalHeight = image.naturalHeight || 0;
-  let paintedWidth = cssWidth;
-  let paintedHeight = cssHeight;
-
-  if (
-    style.objectFit === "contain" &&
-    naturalWidth > 0 &&
-    naturalHeight > 0
-  ) {
-    const fitScale = Math.min(
-      cssWidth / naturalWidth,
-      cssHeight / naturalHeight
-    );
-    paintedWidth = naturalWidth * fitScale;
-    paintedHeight = naturalHeight * fitScale;
-  }
-
-  return {
-    rect: {
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
-    },
-    paintedContent: {
-      width: paintedWidth,
-      height: paintedHeight,
-      offsetX: (cssWidth - paintedWidth) / 2,
-      offsetY: (cssHeight - paintedHeight) / 2,
-    },
-    computedStyle: {
-      width: style.width,
-      height: style.height,
-      maxWidth: style.maxWidth,
-      maxHeight: style.maxHeight,
-      objectFit: style.objectFit,
-      objectPosition: style.objectPosition,
-      aspectRatio: style.aspectRatio,
-      position: style.position,
-      left: style.left,
-      top: style.top,
-      transform: style.transform,
-      transformOrigin: style.transformOrigin,
-      zoom: style.zoom,
-    },
-  };
-}
-
-function getGeometrySnapshot(stage) {
-  const restingSurface = document.querySelector(".pswp");
-  const restingImage = document.querySelector(".pswp__img");
-  const flippingPage = [...document.querySelectorAll(".stf__item")].find(
-    (page) => page.style.display === "block" && !page.classList.contains("--simple")
-  );
-  const restingBookImage = document.querySelector(
-    ".stf__item.--simple .book-page__image"
-  );
-  const flippingBookImage = flippingPage?.querySelector(".book-page__image");
-  const restingRect = restingSurface?.getBoundingClientRect();
-  const flippingRect = flippingPage?.getBoundingClientRect();
-  const bookRect = book.getBoundingClientRect();
-  const pageRect = pageFlip?.getBoundsRect?.();
-  const flippingStyle = flippingPage ? getComputedStyle(flippingPage) : null;
-  const normalizedFlipRect = pageRect
-    ? {
-        left: pageRect.left + pageRect.pageWidth,
-        top: pageRect.top,
-        width: pageRect.pageWidth,
-        height: pageRect.height,
-      }
-    : null;
-
-  const difference =
-    restingRect && normalizedFlipRect
-      ? {
-          width: Math.abs(restingRect.width - normalizedFlipRect.width),
-          height: Math.abs(restingRect.height - normalizedFlipRect.height),
-          top: Math.abs(restingRect.top - normalizedFlipRect.top),
-          left: Math.abs(restingRect.left - normalizedFlipRect.left),
-        }
-      : null;
-  const warning =
-    difference &&
-    Object.values(difference).some((value) => Number(value) > 0.5);
-
-  return {
-    stage,
-    devicePixelRatio: window.devicePixelRatio,
-    viewport: {
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-      visualWidth: window.visualViewport?.width ?? null,
-      visualHeight: window.visualViewport?.height ?? null,
-    },
-    resting: restingRect
-      ? {
-          left: restingRect.left,
-          top: restingRect.top,
-          width: restingRect.width,
-          height: restingRect.height,
-        }
-      : null,
-    book: {
-      left: bookRect.left,
-      top: bookRect.top,
-      width: bookRect.width,
-      height: bookRect.height,
-    },
-    flipPage: normalizedFlipRect,
-    transformedFlipPage: flippingRect
-      ? {
-          left: flippingRect.left,
-          top: flippingRect.top,
-          width: flippingRect.width,
-          height: flippingRect.height,
-          transform: flippingStyle?.transform,
-          transformOrigin: flippingStyle?.transformOrigin,
-          zoom: flippingStyle?.zoom,
-        }
-      : null,
-    imageRendering: {
-      visible: getImageRenderSnapshot(restingImage),
-      bookAtRest: getImageRenderSnapshot(restingBookImage),
-      bookDuringFlip: getImageRenderSnapshot(flippingBookImage),
-    },
-    difference,
-    warning,
-  };
-}
-
-function updateGeometryDebug(stage) {
-  if (!GEOMETRY_DEBUG) return;
-
-  if (!geometryDebugPanel) {
-    geometryDebugPanel = document.createElement("pre");
-    geometryDebugPanel.className = "geometry-debug";
-    geometryDebugPanel.setAttribute("aria-live", "polite");
-    document.body.append(geometryDebugPanel);
-  }
-
-  const snapshot = getGeometrySnapshot(stage);
-  geometryDebugHistory.push({
-    timestamp: window.performance.now(),
-    ...snapshot,
-  });
-  geometryDebugHistory = geometryDebugHistory.slice(-3);
-  geometryDebugPanel.textContent = JSON.stringify(
-    geometryDebugHistory,
-    null,
-    2
-  );
 }
 
 function suspendPageFlipInput() {
@@ -376,7 +210,6 @@ function updatePageStatus(pageIndex) {
     Math.min(pageNames.length - 1, Number(pageIndex) || 0)
   );
 
-  currentPageIndex = safeIndex;
   transitionInProgress = false;
   if (deferredViewportSync) {
     setAppHeight({ force: true });
@@ -387,7 +220,6 @@ function updatePageStatus(pageIndex) {
   document.body.dataset.currentPage = String(safeIndex);
   updateControls(safeIndex);
   openPhotoViewer(safeIndex);
-  updateGeometryDebug("reposo");
 }
 
 function schedulePageActivation(pageIndex) {
@@ -419,13 +251,11 @@ function beginPageTransition(action) {
   transitionInProgress = true;
   book.setAttribute("aria-disabled", "true");
   if (EXPERIENCE_CONFIG.controlsOnly) suspendPageFlipInput();
-  updateGeometryDebug("antes-del-giro");
 
   const execute = () => {
     destroyPhotoViewer();
     menuControls.hidden = true;
     action();
-    window.requestAnimationFrame(() => updateGeometryDebug("durante-el-giro"));
   };
 
   execute();

@@ -133,16 +133,6 @@ html:not(.app-ready) body {
   transform: translate(-50%, -50%);
 }
 
-.book-page.stf__item.menu-page > .menu-viewer {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.book-page.stf__item .page-control {
-  display: none;
-}
-
 .book-control {
   position: fixed;
   z-index: 1000;
@@ -388,24 +378,6 @@ body[data-current-page="2"] .book-control::before {
   visibility: visible;
 }
 
-.geometry-debug {
-  position: fixed;
-  z-index: 2000;
-  top: max(0.5rem, env(safe-area-inset-top, 0px));
-  left: 0.5rem;
-  width: min(calc(100vw - 1rem), 24rem);
-  max-height: calc(100dvh - 1rem);
-  margin: 0;
-  padding: 0.65rem;
-  overflow: auto;
-  border: 1px solid #f2b84b;
-  background: rgb(8 18 12 / 92%);
-  color: #fff4d6;
-  font: 500 0.62rem/1.35 ui-monospace, monospace;
-  white-space: pre-wrap;
-  pointer-events: none;
-}
-
 @media (min-width: 48rem) {
   .book.stf__parent {
     max-width: 38rem !important;
@@ -450,14 +422,6 @@ body[data-current-page="2"] .book-control::before {
       env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
     );
     width: min(100%, 23rem);
-  }
-
-  .book-page.stf__item.menu-page > .menu-viewer {
-    width: min(
-      calc(100vw - 1rem),
-      calc((var(--app-height, 100dvh) - 1rem) * 0.6667)
-    );
-    max-height: calc(var(--app-height, 100dvh) - 1rem);
   }
 
   .book-page.stf__item.thanks > .viewer-surface > .thanks__content {

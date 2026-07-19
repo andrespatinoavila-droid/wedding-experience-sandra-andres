@@ -65,85 +65,6 @@
     margin-top: clamp(0.35rem, 1vh, 0.7rem);
   }
 
-  .menu-page {
-    padding: 0.5rem;
-  }
-
-  .page-control--next {
-    top: auto;
-    right: 0;
-    bottom: 0;
-    width: 5.25rem;
-    height: 5.25rem;
-    padding: 0;
-    overflow: hidden;
-    background:
-      linear-gradient(
-        135deg,
-        transparent 0 49%,
-        oklch(83% 0.045 82 / 0.8) 50%,
-        var(--ivory-deep) 72%,
-        var(--ivory) 100%
-      );
-    clip-path: polygon(100% 0, 100% 100%, 0 100%);
-    transform: none;
-  }
-
-  .page-control--next::before {
-    inset: auto 0.55rem 0.55rem auto;
-    width: 2.4rem;
-    height: 1px;
-    border: 0;
-    background: var(--gold);
-    transform: rotate(45deg);
-    transform-origin: right center;
-    opacity: 0.45;
-  }
-
-  .page-control--next span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-  }
-
-  .page-control--next i {
-    position: absolute;
-    right: 0.7rem;
-    bottom: 0.65rem;
-    color: var(--olive);
-    font-size: 1.05rem;
-  }
-
-  .page-control--previous {
-    top: 0.45rem;
-    left: 0.45rem;
-    flex-direction: row;
-    width: 2.75rem;
-    height: 2.75rem;
-    justify-content: center;
-    padding: 0;
-    border: 1px solid currentColor;
-    border-radius: 50%;
-    background: oklch(97% 0.015 85 / 0.72);
-    opacity: 0.68;
-    transform: none;
-  }
-
-  .page-control--previous::before,
-  .page-control--previous span {
-    display: none;
-  }
-
-  .page-control--previous i {
-    font-size: 0.9rem;
-  }
-
-  .page-control--previous.page-control--light {
-    background: oklch(30% 0.04 135 / 0.72);
-  }
-
   .thanks__content {
     transform: none;
   }
@@ -184,8 +105,7 @@
 
 /* Tablet */
 @media (min-width: 48rem) {
-  .book-page,
-  .page-leaf__face {
+  .book-page {
     padding: 4.5rem 3rem;
   }
 
@@ -194,22 +114,6 @@
     height: 17rem;
   }
 
-  .page-control {
-    right: 0.75rem;
-    left: auto;
-    padding: 1.2rem 0.65rem;
-    font-size: 0.65rem;
-  }
-
-  .page-control--previous {
-    right: auto;
-    left: 0.75rem;
-  }
-
-  .menu-page,
-  .page-leaf__face.menu-page {
-    padding: 2rem 5rem;
-  }
 }
 
 /* Escritorio */
@@ -220,23 +124,11 @@
     box-shadow: 0 0 5rem oklch(15% 0.02 135 / 0.32);
   }
 
-  .page-control--next {
-    right: 1.4rem;
-  }
-
-  .page-control--previous {
-    left: 1.4rem;
-  }
-
-  .menu-viewer {
-    width: min(72vw, calc((100svh - 4rem) * 0.6667), 64rem);
-  }
 }
 
 /* Teléfonos de poca altura */
 @media (max-height: 42rem) {
-  .book-page,
-  .page-leaf__face {
+  .book-page {
     padding-top: 1.35rem;
     padding-bottom: 1.35rem;
   }
