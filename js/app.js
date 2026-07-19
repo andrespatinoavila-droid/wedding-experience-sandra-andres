@@ -35,6 +35,8 @@ const MOBILE_CONTROLS_ONLY =
   window.matchMedia("(pointer: coarse)").matches ||
   navigator.maxTouchPoints > 0;
 const NORMAL_ZOOM_TOLERANCE = 1.02;
+const GEOMETRY_DEBUG =
+  new URLSearchParams(window.location.search).get("debug") === "1";
 
 let pageFlip = null;
 let pageFlipInputSuspended = false;
@@ -46,6 +48,9 @@ let transitionInProgress = false;
 let bookImagesReady = false;
 let pendingPageIndex = null;
 let pageActivationFrame = null;
+let deferredViewportSync = false;
+let geometryDebugPanel = null;
+let geometryDebugHistory = [];
 
 async function decodeBookImage(image) {
   if (!image.complete) {
@@ -74,9 +79,112 @@ async function preloadBookImages() {
   document.documentElement.classList.add("book-images-ready");
 }
 
-function setAppHeight() {
+function setAppHeight(options = {}) {
+  const force = options?.force === true;
+
+  if (transitionInProgress && !force) {
+    deferredViewportSync = true;
+    return;
+  }
+
   const height = window.visualViewport?.height || window.innerHeight;
   document.documentElement.style.setProperty("--app-height", `${height}px`);
+  deferredViewportSync = false;
+}
+
+function getGeometrySnapshot(stage) {
+  const restingSurface = document.querySelector(".pswp");
+  const flippingPage = [...document.querySelectorAll(".stf__item")].find(
+    (page) => page.style.display === "block" && !page.classList.contains("--simple")
+  );
+  const restingRect = restingSurface?.getBoundingClientRect();
+  const flippingRect = flippingPage?.getBoundingClientRect();
+  const bookRect = book.getBoundingClientRect();
+  const pageRect = pageFlip?.getBoundsRect?.();
+  const flippingStyle = flippingPage ? getComputedStyle(flippingPage) : null;
+  const normalizedFlipRect = pageRect
+    ? {
+        left: pageRect.left + pageRect.pageWidth,
+        top: pageRect.top,
+        width: pageRect.pageWidth,
+        height: pageRect.height,
+      }
+    : null;
+
+  const difference =
+    restingRect && normalizedFlipRect
+      ? {
+          width: Math.abs(restingRect.width - normalizedFlipRect.width),
+          height: Math.abs(restingRect.height - normalizedFlipRect.height),
+          top: Math.abs(restingRect.top - normalizedFlipRect.top),
+          left: Math.abs(restingRect.left - normalizedFlipRect.left),
+        }
+      : null;
+  const warning =
+    difference &&
+    Object.values(difference).some((value) => Number(value) > 0.5);
+
+  return {
+    stage,
+    devicePixelRatio: window.devicePixelRatio,
+    viewport: {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      visualWidth: window.visualViewport?.width ?? null,
+      visualHeight: window.visualViewport?.height ?? null,
+    },
+    resting: restingRect
+      ? {
+          left: restingRect.left,
+          top: restingRect.top,
+          width: restingRect.width,
+          height: restingRect.height,
+        }
+      : null,
+    book: {
+      left: bookRect.left,
+      top: bookRect.top,
+      width: bookRect.width,
+      height: bookRect.height,
+    },
+    flipPage: normalizedFlipRect,
+    transformedFlipPage: flippingRect
+      ? {
+          left: flippingRect.left,
+          top: flippingRect.top,
+          width: flippingRect.width,
+          height: flippingRect.height,
+          transform: flippingStyle?.transform,
+          transformOrigin: flippingStyle?.transformOrigin,
+          zoom: flippingStyle?.zoom,
+        }
+      : null,
+    difference,
+    warning,
+  };
+}
+
+function updateGeometryDebug(stage) {
+  if (!GEOMETRY_DEBUG) return;
+
+  if (!geometryDebugPanel) {
+    geometryDebugPanel = document.createElement("pre");
+    geometryDebugPanel.className = "geometry-debug";
+    geometryDebugPanel.setAttribute("aria-live", "polite");
+    document.body.append(geometryDebugPanel);
+  }
+
+  const snapshot = getGeometrySnapshot(stage);
+  geometryDebugHistory.push({
+    timestamp: window.performance.now(),
+    ...snapshot,
+  });
+  geometryDebugHistory = geometryDebugHistory.slice(-3);
+  geometryDebugPanel.textContent = JSON.stringify(
+    geometryDebugHistory,
+    null,
+    2
+  );
 }
 
 function suspendPageFlipInput() {
@@ -219,11 +327,16 @@ function updatePageStatus(pageIndex) {
 
   currentPageIndex = safeIndex;
   transitionInProgress = false;
+  if (deferredViewportSync) {
+    setAppHeight({ force: true });
+    pageFlip?.update();
+  }
   pageStatus.textContent = pageNames[safeIndex];
   book.dataset.currentPage = String(safeIndex);
   document.body.dataset.currentPage = String(safeIndex);
   updateControls(safeIndex);
   openPhotoViewer(safeIndex);
+  updateGeometryDebug("reposo");
 }
 
 function schedulePageActivation(pageIndex) {
@@ -255,11 +368,13 @@ function beginPageTransition(action) {
   transitionInProgress = true;
   book.setAttribute("aria-disabled", "true");
   suspendPageFlipInput();
+  updateGeometryDebug("antes-del-giro");
 
   const execute = () => {
     destroyPhotoViewer();
     menuControls.hidden = true;
     action();
+    window.requestAnimationFrame(() => updateGeometryDebug("durante-el-giro"));
   };
 
   execute();
@@ -316,10 +431,11 @@ function initializePageFlip() {
   }
 
   preparePages();
+  const initialBookRect = book.getBoundingClientRect();
 
   pageFlip = new window.St.PageFlip(book, {
-    width: 390,
-    height: 844,
+    width: initialBookRect.width,
+    height: initialBookRect.height,
     size: "stretch",
     minWidth: 280,
     maxWidth: 520,
@@ -330,7 +446,7 @@ function initializePageFlip() {
     flippingTime: 1100,
     usePortrait: true,
     startZIndex: 10,
-    autoSize: true,
+    autoSize: false,
     maxShadowOpacity: 0.34,
     showCover: false,
     mobileScrollSupport: true,

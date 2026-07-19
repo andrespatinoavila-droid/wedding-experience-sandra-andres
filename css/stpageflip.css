@@ -356,6 +356,24 @@ body[data-current-page="2"] .book-control::before {
   visibility: visible;
 }
 
+.geometry-debug {
+  position: fixed;
+  z-index: 2000;
+  top: max(0.5rem, env(safe-area-inset-top, 0px));
+  left: 0.5rem;
+  width: min(calc(100vw - 1rem), 24rem);
+  max-height: calc(100dvh - 1rem);
+  margin: 0;
+  padding: 0.65rem;
+  overflow: auto;
+  border: 1px solid #f2b84b;
+  background: rgb(8 18 12 / 92%);
+  color: #fff4d6;
+  font: 500 0.62rem/1.35 ui-monospace, monospace;
+  white-space: pre-wrap;
+  pointer-events: none;
+}
+
 @media (min-width: 48rem) {
   .book.stf__parent {
     max-width: 38rem !important;
