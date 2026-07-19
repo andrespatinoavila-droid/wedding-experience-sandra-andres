@@ -92,11 +92,72 @@ function setAppHeight(options = {}) {
   deferredViewportSync = false;
 }
 
+function getImageRenderSnapshot(image) {
+  if (!image) return null;
+
+  const rect = image.getBoundingClientRect();
+  const style = getComputedStyle(image);
+  const cssWidth = Number.parseFloat(style.width) || rect.width;
+  const cssHeight = Number.parseFloat(style.height) || rect.height;
+  const naturalWidth = image.naturalWidth || 0;
+  const naturalHeight = image.naturalHeight || 0;
+  let paintedWidth = cssWidth;
+  let paintedHeight = cssHeight;
+
+  if (
+    style.objectFit === "contain" &&
+    naturalWidth > 0 &&
+    naturalHeight > 0
+  ) {
+    const fitScale = Math.min(
+      cssWidth / naturalWidth,
+      cssHeight / naturalHeight
+    );
+    paintedWidth = naturalWidth * fitScale;
+    paintedHeight = naturalHeight * fitScale;
+  }
+
+  return {
+    rect: {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+    },
+    paintedContent: {
+      width: paintedWidth,
+      height: paintedHeight,
+      offsetX: (cssWidth - paintedWidth) / 2,
+      offsetY: (cssHeight - paintedHeight) / 2,
+    },
+    computedStyle: {
+      width: style.width,
+      height: style.height,
+      maxWidth: style.maxWidth,
+      maxHeight: style.maxHeight,
+      objectFit: style.objectFit,
+      objectPosition: style.objectPosition,
+      aspectRatio: style.aspectRatio,
+      position: style.position,
+      left: style.left,
+      top: style.top,
+      transform: style.transform,
+      transformOrigin: style.transformOrigin,
+      zoom: style.zoom,
+    },
+  };
+}
+
 function getGeometrySnapshot(stage) {
   const restingSurface = document.querySelector(".pswp");
+  const restingImage = document.querySelector(".pswp__img");
   const flippingPage = [...document.querySelectorAll(".stf__item")].find(
     (page) => page.style.display === "block" && !page.classList.contains("--simple")
   );
+  const restingBookImage = document.querySelector(
+    ".stf__item.--simple .book-page__image"
+  );
+  const flippingBookImage = flippingPage?.querySelector(".book-page__image");
   const restingRect = restingSurface?.getBoundingClientRect();
   const flippingRect = flippingPage?.getBoundingClientRect();
   const bookRect = book.getBoundingClientRect();
@@ -159,6 +220,11 @@ function getGeometrySnapshot(stage) {
           zoom: flippingStyle?.zoom,
         }
       : null,
+    imageRendering: {
+      visible: getImageRenderSnapshot(restingImage),
+      bookAtRest: getImageRenderSnapshot(restingBookImage),
+      bookDuringFlip: getImageRenderSnapshot(flippingBookImage),
+    },
     difference,
     warning,
   };
