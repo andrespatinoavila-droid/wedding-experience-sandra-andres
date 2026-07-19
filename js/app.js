@@ -44,6 +44,8 @@ let nextControl = null;
 let currentPageIndex = 0;
 let transitionInProgress = false;
 let bookImagesReady = false;
+let pendingPageIndex = null;
+let pageActivationFrame = null;
 
 async function decodeBookImage(image) {
   if (!image.complete) {
@@ -222,6 +224,23 @@ function updatePageStatus(pageIndex) {
   openPhotoViewer(safeIndex);
 }
 
+function schedulePageActivation(pageIndex) {
+  pendingPageIndex = pageIndex;
+
+  if (pageActivationFrame !== null) {
+    window.cancelAnimationFrame(pageActivationFrame);
+  }
+
+  pageActivationFrame = window.requestAnimationFrame(() => {
+    pageActivationFrame = window.requestAnimationFrame(() => {
+      const pageToActivate = pendingPageIndex;
+      pendingPageIndex = null;
+      pageActivationFrame = null;
+      updatePageStatus(pageToActivate);
+    });
+  });
+}
+
 function beginPageTransition(action, { returningFromMenu = false } = {}) {
   if (
     !pageFlip ||
@@ -329,7 +348,18 @@ function initializePageFlip() {
   });
 
   pageFlip.on("init", (event) => updatePageStatus(event.data.page));
-  pageFlip.on("flip", (event) => updatePageStatus(event.data));
+  pageFlip.on("flip", (event) => {
+    pendingPageIndex = event.data;
+
+    if (pageFlip.getState() === "read") {
+      schedulePageActivation(event.data);
+    }
+  });
+  pageFlip.on("changeState", (event) => {
+    if (event.data === "read" && pendingPageIndex !== null) {
+      schedulePageActivation(pendingPageIndex);
+    }
+  });
   pageFlip.loadFromHTML(pages);
   window.__weddingPageFlip = pageFlip;
   document.body.dataset.mobilePageFlip = MOBILE_CONTROLS_ONLY
