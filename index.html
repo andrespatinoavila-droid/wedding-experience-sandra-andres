@@ -8,12 +8,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Karla:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css?v=20260718-unified-viewer-2">
-    <link rel="stylesheet" href="css/responsive.css?v=20260718-unified-viewer-2">
-    <link rel="stylesheet" href="css/stpageflip.css?v=20260718-unified-viewer-6">
+    <link rel="stylesheet" href="css/styles.css?v=20260718-photoswipe">
+    <link rel="stylesheet" href="css/responsive.css?v=20260718-photoswipe">
+    <link rel="stylesheet" href="vendor/photoswipe/photoswipe.css?v=5.4.4">
+    <link rel="stylesheet" href="css/stpageflip.css?v=20260718-photoswipe">
     <script src="vendor/page-flip.browser.js?v=2.0.7" defer></script>
-    <script src="vendor/panzoom.min.js?v=4.6.2" defer></script>
-    <script src="js/app.js?v=20260718-uncontrolled-pan-test" defer></script>
+    <script type="module" src="js/app.js?v=20260718-photoswipe"></script>
   </head>
   <body>
     <a class="skip-link" href="#page-menu">Ir al menú</a>
@@ -98,25 +98,11 @@
 
     <aside
       id="menu-photo-viewer"
-      class="photo-viewer"
+      class="menu-controls"
       aria-label="Visor del menú oficial"
       aria-hidden="true"
       hidden
     >
-      <div id="menu-viewer" class="photo-viewer__stage">
-        <div id="surface-menu" class="viewer-surface viewer-surface--menu">
-          <img
-            id="official-menu"
-            class="photo-viewer__image"
-            src="img/menu/menu-oficial.png"
-            alt="Menú oficial de la boda de Sandra Bonilla y Andrés Patiño"
-            width="1024"
-            height="1536"
-            draggable="false"
-          >
-        </div>
-      </div>
-
       <button
         id="viewer-continue"
         class="viewer-control viewer-control--continue"
