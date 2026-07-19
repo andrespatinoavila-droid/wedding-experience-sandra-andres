@@ -220,12 +220,6 @@
     box-shadow: 0 0 5rem oklch(15% 0.02 135 / 0.32);
   }
 
-  .book-page,
-  .page-leaf__face {
-    border-right: 1px solid oklch(60% 0.11 75 / 0.15);
-    border-left: 1px solid oklch(60% 0.11 75 / 0.15);
-  }
-
   .page-control--next {
     right: 1.4rem;
   }

@@ -58,10 +58,17 @@
 
 .book-page.stf__item {
   box-sizing: border-box;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
   visibility: visible;
   opacity: 1;
   transition: none;
   touch-action: auto;
+}
+
+html:not(.app-ready) body {
+  visibility: hidden;
 }
 
 .book-page.stf__item.welcome,

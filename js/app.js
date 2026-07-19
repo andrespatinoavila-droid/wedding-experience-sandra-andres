@@ -336,6 +336,7 @@ function openPhotoViewer(pageIndex) {
   photoSwipe = configurePhotoSwipe(pageIndex);
   photoSwipe.init();
   syncZoomState();
+  document.documentElement.classList.add("app-ready");
 }
 
 function destroyPhotoViewer() {
