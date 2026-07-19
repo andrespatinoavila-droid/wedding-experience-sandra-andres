@@ -117,6 +117,8 @@ function configurePhotoSwipe(pageIndex) {
     index: 0,
     bgOpacity: 1,
     showHideAnimationType: "none",
+    showAnimationDuration: 0,
+    hideAnimationDuration: 0,
     allowPanToNext: false,
     loop: false,
     pinchToClose: false,
@@ -241,7 +243,7 @@ function schedulePageActivation(pageIndex) {
   });
 }
 
-function beginPageTransition(action, { returningFromMenu = false } = {}) {
+function beginPageTransition(action) {
   if (
     !pageFlip ||
     !bookImagesReady ||
@@ -257,16 +259,10 @@ function beginPageTransition(action, { returningFromMenu = false } = {}) {
   const execute = () => {
     destroyPhotoViewer();
     menuControls.hidden = true;
-    document.body.classList.remove("viewer-returning");
-    window.requestAnimationFrame(action);
+    action();
   };
 
-  if (returningFromMenu && photoSwipe?.element) {
-    document.body.classList.add("viewer-returning");
-    window.setTimeout(execute, 380);
-  } else {
-    execute();
-  }
+  execute();
 }
 
 function initializeControls() {
@@ -304,9 +300,7 @@ function initializeControls() {
   viewerCover.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    beginPageTransition(() => pageFlip.turnToPrevPage(), {
-      returningFromMenu: true,
-    });
+    beginPageTransition(() => pageFlip.turnToPrevPage());
   });
 
   skipLink?.addEventListener("click", (event) => {
