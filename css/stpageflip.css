@@ -412,6 +412,26 @@ body[data-current-page="2"] .book-control::before {
   }
 }
 
+@media (min-width: 64rem) {
+  html.experience-desktop .book.stf__parent {
+    max-width: 32.5rem !important;
+  }
+
+  html.experience-desktop .book-control {
+    transition:
+      filter 180ms ease,
+      transform 180ms ease;
+  }
+
+  html.experience-desktop .book-control:hover {
+    filter: brightness(1.08);
+  }
+
+  html.experience-desktop .book-control:active {
+    transform: scale(0.985);
+  }
+}
+
 @media (max-width: 47.99rem) {
   .book-page.stf__item {
     width: 100%;

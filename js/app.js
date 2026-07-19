@@ -1,4 +1,11 @@
 import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
+import {
+  detectExperienceConfig,
+} from "./experience-config.js?v=20260719-desktop-profile-1";
+
+const EXPERIENCE_CONFIG = detectExperienceConfig();
+document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
+document.documentElement.dataset.experienceProfile = EXPERIENCE_CONFIG.name;
 
 const book = document.querySelector("#wedding-book");
 const pages = [...document.querySelectorAll(".book-page")];
@@ -31,9 +38,6 @@ const pageImages = [
   },
 ];
 
-const MOBILE_CONTROLS_ONLY =
-  window.matchMedia("(pointer: coarse)").matches ||
-  navigator.maxTouchPoints > 0;
 const NORMAL_ZOOM_TOLERANCE = 1.02;
 const GEOMETRY_DEBUG =
   new URLSearchParams(window.location.search).get("debug") === "1";
@@ -260,7 +264,7 @@ function suspendPageFlipInput() {
 }
 
 function resumePageFlipInput() {
-  if (MOBILE_CONTROLS_ONLY) {
+  if (EXPERIENCE_CONFIG.controlsOnly) {
     suspendPageFlipInput();
     return;
   }
@@ -289,27 +293,7 @@ function configurePhotoSwipe(pageIndex) {
   const viewer = new PhotoSwipe({
     dataSource: [pageImages[pageIndex]],
     index: 0,
-    bgOpacity: 1,
-    showHideAnimationType: "none",
-    showAnimationDuration: 0,
-    hideAnimationDuration: 0,
-    allowPanToNext: false,
-    loop: false,
-    pinchToClose: false,
-    closeOnVerticalDrag: false,
-    clickToCloseNonZoomable: false,
-    imageClickAction: false,
-    bgClickAction: false,
-    tapAction: false,
-    doubleTapAction: "zoom",
-    initialZoomLevel: "fit",
-    secondaryZoomLevel: 1.5,
-    maxZoomLevel: 4,
-    wheelToZoom: true,
-    escKey: false,
-    arrowKeys: false,
-    trapFocus: false,
-    returnFocus: false,
+    ...EXPERIENCE_CONFIG.photoSwipe,
   });
 
   viewer.on("uiRegister", () => {
@@ -434,7 +418,7 @@ function beginPageTransition(action) {
   }
   transitionInProgress = true;
   book.setAttribute("aria-disabled", "true");
-  suspendPageFlipInput();
+  if (EXPERIENCE_CONFIG.controlsOnly) suspendPageFlipInput();
   updateGeometryDebug("antes-del-giro");
 
   const execute = () => {
@@ -503,25 +487,7 @@ function initializePageFlip() {
   pageFlip = new window.St.PageFlip(book, {
     width: initialBookRect.width,
     height: initialBookRect.height,
-    size: "stretch",
-    minWidth: 280,
-    maxWidth: 520,
-    minHeight: 605,
-    maxHeight: 1125,
-    startPage: 0,
-    drawShadow: true,
-    flippingTime: 1100,
-    usePortrait: true,
-    startZIndex: 10,
-    autoSize: false,
-    maxShadowOpacity: 0.34,
-    showCover: false,
-    mobileScrollSupport: true,
-    swipeDistance: 70,
-    clickEventForward: true,
-    useMouseEvents: !MOBILE_CONTROLS_ONLY,
-    showPageCorners: true,
-    disableFlipByClick: true,
+    ...EXPERIENCE_CONFIG.pageFlip,
   });
 
   pageFlip.on("init", (event) => updatePageStatus(event.data.page));
@@ -539,12 +505,13 @@ function initializePageFlip() {
   });
   pageFlip.loadFromHTML(pages);
   window.__weddingPageFlip = pageFlip;
-  document.body.dataset.mobilePageFlip = MOBILE_CONTROLS_ONLY
+  document.body.dataset.experienceProfile = EXPERIENCE_CONFIG.name;
+  document.body.dataset.mobilePageFlip = EXPERIENCE_CONFIG.controlsOnly
     ? "controls-only"
     : "free-swipe";
 
   initializeControls();
-  if (MOBILE_CONTROLS_ONLY) suspendPageFlipInput();
+  if (EXPERIENCE_CONFIG.controlsOnly) suspendPageFlipInput();
 }
 
 setAppHeight();
