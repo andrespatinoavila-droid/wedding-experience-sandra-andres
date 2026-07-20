@@ -25,44 +25,8 @@
     overflow: hidden;
   }
 
-  .welcome__content {
-    transform: none;
-  }
-
-  .kicker {
-    margin-bottom: clamp(0.45rem, 1.5vh, 0.85rem);
-    font-size: clamp(0.52rem, 1.5vh, 0.66rem);
-  }
-
-  .monogram {
-    margin-bottom: clamp(0.4rem, 1.3vh, 0.75rem);
-    font-size: clamp(2.75rem, 9vh, 4.3rem);
-  }
-
-  h1 {
-    margin-bottom: clamp(0.2rem, 0.7vh, 0.45rem);
-    font-size: clamp(1.35rem, 4.2vh, 1.85rem);
-    line-height: 1.12;
-  }
-
-  .date {
-    margin-bottom: clamp(0.45rem, 1.35vh, 0.85rem);
-    font-size: clamp(0.52rem, 1.45vh, 0.63rem);
-  }
-
   .ornament {
     margin-bottom: clamp(0.55rem, 1.6vh, 0.95rem);
-  }
-
-  .welcome__message {
-    font-size: clamp(0.82rem, 2.15vh, 1.02rem);
-    line-height: 1.32;
-  }
-
-  .welcome__message br + br {
-    display: block;
-    content: "";
-    margin-top: clamp(0.35rem, 1vh, 0.7rem);
   }
 
   .thanks__content {
@@ -109,11 +73,6 @@
     padding: 4.5rem 3rem;
   }
 
-  .botanical {
-    width: 12rem;
-    height: 17rem;
-  }
-
 }
 
 /* Escritorio */
@@ -133,23 +92,8 @@
     padding-bottom: 1.35rem;
   }
 
-  .kicker {
-    margin-bottom: 0.75rem;
-  }
-
-  .monogram {
-    margin-bottom: 0.65rem;
-    font-size: 3rem;
-  }
-
-  .date,
   .ornament {
     margin-bottom: 0.85rem;
-  }
-
-  .welcome__message {
-    font-size: 0.9rem;
-    line-height: 1.35;
   }
 
   .thanks__message {

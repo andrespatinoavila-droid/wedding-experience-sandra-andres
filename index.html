@@ -8,78 +8,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Karla:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css?v=1.0.0">
-    <link rel="stylesheet" href="css/responsive.css?v=1.0.0">
+    <link rel="stylesheet" href="css/styles.css?v=1.1.0">
+    <link rel="stylesheet" href="css/responsive.css?v=1.1.0">
     <link rel="stylesheet" href="vendor/photoswipe/photoswipe.css?v=5.4.4">
-    <link rel="stylesheet" href="css/stpageflip.css?v=1.0.0">
+    <link rel="stylesheet" href="css/stpageflip.css?v=1.1.0">
     <script src="vendor/page-flip.browser.js?v=2.0.7" defer></script>
-    <script type="module" src="js/app.js?v=1.0.0"></script>
+    <script type="module" src="js/app.js?v=1.1.0"></script>
   </head>
   <body>
-    <a class="skip-link" href="#page-menu">Ir al menú</a>
-
     <main id="wedding-book" class="book" aria-label="Libro digital de nuestra boda">
-      <!-- Página 1: portada -->
-      <section
-        id="page-cover"
-        class="book-page welcome is-active"
-        data-page="0"
-        aria-labelledby="couple-names"
-        aria-hidden="false"
-      >
-        <img
-          class="book-page__image book-page__image--cover"
-          src="img/pages/portada.png"
-          alt=""
-          width="1170"
-          height="2532"
-          decoding="async"
-          fetchpriority="high"
-          draggable="false"
-          aria-hidden="true"
-        >
-        <div id="surface-cover" class="viewer-surface viewer-surface--cover">
-          <div class="botanical botanical--top" aria-hidden="true"></div>
-
-          <div class="welcome__content page-content">
-            <p class="kicker">Nuestra celebración</p>
-
-            <div class="monogram" aria-label="Monograma de Sandra y Andrés">
-              <span>S</span>
-              <i aria-hidden="true">|</i>
-              <span>A</span>
-            </div>
-
-            <h1 id="couple-names" class="couple-names">
-              <span>Sandra Bonilla</span>
-              <i>&amp;</i>
-              <span>Andrés Patiño</span>
-            </h1>
-            <p class="date">08 de agosto de 2026</p>
-
-            <div class="ornament" aria-hidden="true"><span></span><i></i><span></span></div>
-
-            <p class="welcome__message">
-              Hoy queremos compartir con ustedes uno de los días más importantes de nuestras vidas.
-              <br><br>
-              Gracias por acompañarnos y por hacer parte de esta celebración.
-              <br><br>
-              Hemos preparado este menú con mucho cariño para ustedes.
-            </p>
-          </div>
-
-          <div class="botanical botanical--bottom" aria-hidden="true"></div>
-        </div>
-      </section>
-
-      <!-- Página 2: transición entre la portada y el visor -->
+      <!-- Página 1: menú oficial -->
       <section
         id="page-menu"
-        class="book-page menu-transition-page is-next"
-        data-page="1"
+        class="book-page menu-transition-page is-active"
+        data-page="0"
         aria-label="Acceso al menú oficial de la boda"
-        aria-hidden="true"
-        inert
+        aria-hidden="false"
       >
         <img
           class="book-page__image book-page__image--menu"
@@ -94,11 +38,11 @@
         >
       </section>
 
-      <!-- Página 3: agradecimiento -->
+      <!-- Página 2: agradecimiento -->
       <footer
         id="page-thanks"
         class="book-page thanks is-next"
-        data-page="2"
+        data-page="1"
         aria-labelledby="thanks-title"
         aria-hidden="true"
         inert
@@ -146,17 +90,8 @@
         <i aria-hidden="true">→</i>
       </button>
 
-      <button
-        id="viewer-cover"
-        class="viewer-control viewer-control--cover"
-        type="button"
-        aria-label="Regresar a la portada"
-      >
-        <span>Portada</span>
-        <i aria-hidden="true">←</i>
-      </button>
     </aside>
 
-    <p id="page-status" class="visually-hidden" aria-live="polite">Portada</p>
+    <p id="page-status" class="visually-hidden" aria-live="polite">Menú oficial</p>
   </body>
 </html>

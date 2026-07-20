@@ -71,7 +71,6 @@ html:not(.app-ready) body {
   visibility: hidden;
 }
 
-.book-page.stf__item.welcome,
 .book-page.stf__item.thanks {
   touch-action: none;
   -webkit-user-select: none;
@@ -245,13 +244,7 @@ html:not(.app-ready) body {
   background: var(--ivory);
 }
 
-body[data-current-page="0"] .pswp__bg {
-  background:
-    radial-gradient(circle at 50% 45%, var(--ivory) 0 38%, transparent 70%),
-    linear-gradient(145deg, var(--ivory-deep), var(--ivory) 42%, var(--ivory-deep));
-}
-
-body[data-current-page="2"] .pswp__bg {
+body[data-current-page="1"] .pswp__bg {
   background: var(--olive-dark);
 }
 
@@ -264,13 +257,7 @@ body[data-current-page="2"] .pswp__bg {
   user-select: none;
 }
 
-body[data-current-page="0"] .pswp__img {
-  padding-right: 1px;
-  padding-left: 1px;
-  background: rgb(249 244 234);
-}
-
-body[data-current-page="2"] .pswp__img {
+body[data-current-page="1"] .pswp__img {
   padding-right: 1px;
   padding-left: 1px;
   background: rgb(37 50 30);
@@ -339,30 +326,17 @@ body[data-current-page="2"] .pswp__img {
   right: 0;
 }
 
-.viewer-control--cover {
-  left: 0;
-  transform: scaleX(-1);
-}
-
-.viewer-control--cover span {
-  transform: scaleX(-1) rotate(45deg);
-}
-
-.viewer-control--cover i {
-  transform: scaleX(-1);
-}
-
 .is-zoomed .viewer-control {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
 }
 
-body[data-current-page="2"] .book-control {
+body[data-current-page="1"] .book-control {
   color: var(--gold-light);
 }
 
-body[data-current-page="2"] .book-control::before {
+body[data-current-page="1"] .book-control::before {
   background:
     linear-gradient(
       135deg,
@@ -414,14 +388,6 @@ body[data-current-page="2"] .book-control::before {
 
   .book-page.stf__item > .viewer-surface > .page-content {
     max-height: calc(var(--app-height, 100dvh) - 1rem);
-  }
-
-  .book-page.stf__item.welcome > .viewer-surface > .welcome__content {
-    top: calc(
-      50% - 5vh +
-      env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
-    );
-    width: min(100%, 23rem);
   }
 
   .book-page.stf__item.thanks > .viewer-surface > .thanks__content {

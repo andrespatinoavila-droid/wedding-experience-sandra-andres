@@ -39,24 +39,6 @@ button {
   background: oklch(72% 0.1 80 / 0.35);
 }
 
-.skip-link {
-  position: fixed;
-  z-index: 100;
-  top: 0.75rem;
-  left: 0.75rem;
-  padding: 0.65rem 0.9rem;
-  background: var(--olive-dark);
-  color: var(--ivory);
-  font: 500 0.75rem var(--sans);
-  letter-spacing: 0.08em;
-  text-decoration: none;
-  transform: translateY(-150%);
-}
-
-.skip-link:focus {
-  transform: translateY(0);
-}
-
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -116,79 +98,10 @@ button {
   transform: translateY(0);
 }
 
-.welcome {
-  text-align: center;
-  background:
-    radial-gradient(circle at 50% 45%, var(--ivory) 0 38%, transparent 70%),
-    linear-gradient(145deg, var(--ivory-deep), var(--ivory) 42%, var(--ivory-deep));
-}
-
-.welcome__content {
-  position: relative;
-  z-index: 2;
-  width: min(100%, 28rem);
-}
-
-.kicker {
-  margin: 0 0 1.45rem;
-  color: var(--olive);
-  font: 500 0.68rem/1.4 var(--sans);
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-}
-
-.monogram {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.24em;
-  margin-bottom: 1rem;
-  color: var(--gold);
-  font: 500 clamp(3.45rem, 17vw, 5.25rem)/0.9 var(--serif);
-}
-
-.monogram i {
-  font-size: 0.7em;
-  font-style: normal;
-  font-weight: 300;
-}
-
 h1,
 h2,
 p {
   margin-top: 0;
-}
-
-h1 {
-  max-width: 21rem;
-  margin-right: auto;
-  margin-bottom: 0.5rem;
-  margin-left: auto;
-  font: 500 clamp(1.45rem, 6.6vw, 2rem)/1.3 var(--serif);
-}
-
-h1 i {
-  color: var(--gold);
-  font-weight: 400;
-}
-
-.couple-names {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.couple-names span,
-.couple-names i {
-  display: block;
-}
-
-.date {
-  margin-bottom: 1.45rem;
-  color: var(--olive);
-  font: 500 0.65rem/1.4 var(--sans);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
 }
 
 .ornament {
@@ -210,49 +123,6 @@ h1 i {
   height: 0.38rem;
   border-radius: 50%;
   background: var(--gold);
-}
-
-.welcome__message {
-  max-width: 20rem;
-  margin: 0 auto;
-  color: var(--ink-soft);
-  font: italic 400 clamp(0.95rem, 4vw, 1.14rem)/1.48 var(--serif);
-}
-
-.botanical {
-  position: absolute;
-  width: 8rem;
-  height: 12rem;
-  opacity: 0.18;
-  transform: rotate(-24deg);
-}
-
-.botanical::before,
-.botanical::after {
-  position: absolute;
-  border: 1px solid var(--olive);
-  border-radius: 100% 0 100% 0;
-  content: "";
-}
-
-.botanical::before {
-  inset: 0 45% 32% 0;
-  box-shadow: 2.1rem 2.8rem 0 -0.15rem var(--ivory), 2.1rem 2.8rem 0 0 var(--olive);
-}
-
-.botanical::after {
-  inset: 35% 8% 0 48%;
-}
-
-.botanical--top {
-  top: -2.5rem;
-  right: -2rem;
-}
-
-.botanical--bottom {
-  bottom: -3rem;
-  left: -2rem;
-  transform: rotate(156deg);
 }
 
 .thanks {

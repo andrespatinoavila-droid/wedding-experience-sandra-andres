@@ -1,7 +1,7 @@
 import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
-} from "./experience-config.js?v=1.0.0";
+} from "./experience-config.js?v=1.1.0";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
@@ -12,18 +12,10 @@ const pages = [...document.querySelectorAll(".book-page")];
 const pageStatus = document.querySelector("#page-status");
 const menuControls = document.querySelector("#menu-photo-viewer");
 const viewerContinue = document.querySelector("#viewer-continue");
-const viewerCover = document.querySelector("#viewer-cover");
-const skipLink = document.querySelector(".skip-link");
 const bookPageImages = [...document.querySelectorAll(".book-page__image")];
 
-const pageNames = ["Portada", "Menú oficial", "Agradecimiento"];
+const pageNames = ["Menú oficial", "Agradecimiento"];
 const pageImages = [
-  {
-    src: "img/pages/portada.png",
-    width: 1170,
-    height: 2532,
-    alt: "Portada de la boda de Sandra Bonilla y Andrés Patiño",
-  },
   {
     src: "img/menu/menu-oficial.png",
     width: 1024,
@@ -44,7 +36,6 @@ let pageFlip = null;
 let pageFlipInputSuspended = false;
 let photoSwipe = null;
 let previousControl = null;
-let nextControl = null;
 let transitionInProgress = false;
 let bookImagesReady = false;
 let pendingPageIndex = null;
@@ -146,10 +137,10 @@ function openPhotoViewer(pageIndex) {
   destroyPhotoViewer();
   document.body.dataset.currentPage = String(pageIndex);
   document.body.classList.add("viewer-active");
-  document.body.classList.toggle("menu-viewer-active", pageIndex === 1);
+  document.body.classList.toggle("menu-viewer-active", pageIndex === 0);
   book.setAttribute("aria-hidden", "true");
-  menuControls.hidden = pageIndex !== 1;
-  menuControls.setAttribute("aria-hidden", String(pageIndex !== 1));
+  menuControls.hidden = pageIndex !== 0;
+  menuControls.setAttribute("aria-hidden", String(pageIndex !== 0));
 
   photoSwipe = configurePhotoSwipe(pageIndex);
   photoSwipe.init();
@@ -191,17 +182,12 @@ function preparePages() {
 
 function updateControls(pageIndex) {
   if (previousControl) {
-    previousControl.hidden = pageIndex !== 2;
+    previousControl.hidden = pageIndex !== 1;
     previousControl.querySelector("span").textContent = "Regresar";
   }
 
-  if (nextControl) {
-    nextControl.hidden = pageIndex !== 0;
-    nextControl.querySelector("span").textContent = "Ver menú";
-  }
-
-  menuControls.hidden = pageIndex !== 1;
-  menuControls.setAttribute("aria-hidden", String(pageIndex !== 1));
+  menuControls.hidden = pageIndex !== 0;
+  menuControls.setAttribute("aria-hidden", String(pageIndex !== 0));
 }
 
 function updatePageStatus(pageIndex) {
@@ -262,18 +248,6 @@ function beginPageTransition(action) {
 }
 
 function initializeControls() {
-  nextControl = document.createElement("button");
-  nextControl.className = "book-control book-control--next";
-  nextControl.type = "button";
-  nextControl.setAttribute("aria-label", "Pasar a la página siguiente");
-  nextControl.innerHTML = '<span>Ver menú</span><i aria-hidden="true">→</i>';
-  nextControl.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    beginPageTransition(() => pageFlip.flipNext("bottom"));
-  });
-  document.body.append(nextControl);
-
   previousControl = document.createElement("button");
   previousControl.className = "book-control book-control--previous";
   previousControl.type = "button";
@@ -293,16 +267,6 @@ function initializeControls() {
     beginPageTransition(() => pageFlip.flipNext("bottom"));
   });
 
-  viewerCover.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    beginPageTransition(() => pageFlip.turnToPrevPage());
-  });
-
-  skipLink?.addEventListener("click", (event) => {
-    event.preventDefault();
-    beginPageTransition(() => pageFlip.flip(1, "bottom"));
-  });
 }
 
 function initializePageFlip() {
