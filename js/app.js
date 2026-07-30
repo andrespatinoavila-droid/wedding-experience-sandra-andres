@@ -1,7 +1,7 @@
 import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
-} from "./experience-config.js?v=1.1.2";
+} from "./experience-config.js?v=1.1.3";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
@@ -247,6 +247,15 @@ function beginPageTransition(action) {
   execute();
 }
 
+function flipPreviousFromBottom() {
+  const bounds = pageFlip.getBoundsRect();
+
+  pageFlip.getFlipController().flip({
+    x: bounds.left + 10,
+    y: bounds.height - 2,
+  });
+}
+
 function initializeControls() {
   previousControl = document.createElement("button");
   previousControl.className = "book-control book-control--previous";
@@ -257,7 +266,7 @@ function initializeControls() {
   previousControl.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    beginPageTransition(() => pageFlip.turnToPrevPage());
+    beginPageTransition(flipPreviousFromBottom);
   });
   document.body.append(previousControl);
 
