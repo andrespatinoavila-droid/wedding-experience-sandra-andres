@@ -1,7 +1,7 @@
 import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
-} from "./experience-config.js?v=1.1.4";
+} from "./experience-config.js?v=1.1.5-rc1";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
@@ -259,6 +259,59 @@ function flipFromBottom(direction) {
   });
 }
 
+function configureSymmetricReverseFlip() {
+  const collection = pageFlip.getPageCollection();
+  const render = pageFlip.getRender();
+  const originalGetFlippingPage = collection.getFlippingPage.bind(collection);
+  const originalGetBottomPage = collection.getBottomPage.bind(collection);
+  const originalDrawBottomPage = render.drawBottomPage.bind(render);
+
+  collection.getFlippingPage = (direction) => {
+    const isBackwardPortraitFlip =
+      direction === 1 &&
+      pageFlip.getOrientation() === "portrait" &&
+      collection.getCurrentSpreadIndex() > 0;
+
+    if (!isBackwardPortraitFlip) {
+      return originalGetFlippingPage(direction);
+    }
+
+    const currentIndex = collection.getCurrentSpreadIndex();
+    return collection.getPage(currentIndex).newTemporaryCopy();
+  };
+
+  collection.getBottomPage = (direction) => {
+    const isBackwardPortraitFlip =
+      direction === 1 &&
+      pageFlip.getOrientation() === "portrait" &&
+      collection.getCurrentSpreadIndex() > 0;
+
+    if (!isBackwardPortraitFlip) {
+      return originalGetBottomPage(direction);
+    }
+
+    return collection.getPage(collection.getCurrentSpreadIndex() - 1);
+  };
+
+  render.drawBottomPage = () => {
+    const isBackwardPortraitFlip =
+      render.getOrientation() === "portrait" &&
+      render.getDirection() === 1 &&
+      render.bottomPage;
+
+    if (!isBackwardPortraitFlip) {
+      originalDrawBottomPage();
+      return;
+    }
+
+    render.bottomPage.setOrientation(1);
+    render.bottomPage.simpleDraw(1);
+    render.bottomPage.getElement().style.zIndex = String(
+      render.getSettings().startZIndex + 3
+    );
+  };
+}
+
 function initializeControls() {
   previousControl = document.createElement("button");
   previousControl.className = "book-control book-control--previous";
@@ -310,6 +363,7 @@ function initializePageFlip() {
     }
   });
   pageFlip.loadFromHTML(pages);
+  configureSymmetricReverseFlip();
   window.__weddingPageFlip = pageFlip;
   document.body.dataset.experienceProfile = EXPERIENCE_CONFIG.name;
   document.body.dataset.mobilePageFlip = EXPERIENCE_CONFIG.controlsOnly
