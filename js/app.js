@@ -1,7 +1,7 @@
 import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
-} from "./experience-config.js?v=1.1.3";
+} from "./experience-config.js?v=1.1.4";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
@@ -247,11 +247,14 @@ function beginPageTransition(action) {
   execute();
 }
 
-function flipPreviousFromBottom() {
+function flipFromBottom(direction) {
   const bounds = pageFlip.getBoundsRect();
+  const isForward = direction === "forward";
 
   pageFlip.getFlipController().flip({
-    x: bounds.left + 10,
+    x: isForward
+      ? bounds.left + 2 * bounds.pageWidth - 10
+      : bounds.left + 10,
     y: bounds.height - 2,
   });
 }
@@ -266,14 +269,14 @@ function initializeControls() {
   previousControl.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    beginPageTransition(flipPreviousFromBottom);
+    beginPageTransition(() => flipFromBottom("backward"));
   });
   document.body.append(previousControl);
 
   viewerContinue.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    beginPageTransition(() => pageFlip.flipNext("bottom"));
+    beginPageTransition(() => flipFromBottom("forward"));
   });
 
 }
