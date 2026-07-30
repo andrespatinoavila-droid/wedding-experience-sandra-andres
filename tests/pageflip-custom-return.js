@@ -1,5 +1,5 @@
 const FLIP_DURATION = 1100;
-const MENU_IMAGE = "../img/menu/menu-oficial.png";
+const MENU_IMAGE = "../img/menu/menu-oficial-hq-v2.png";
 const THANKS_IMAGE = "../img/pages/agradecimiento.png";
 
 const stage = document.querySelector("#test-stage");
