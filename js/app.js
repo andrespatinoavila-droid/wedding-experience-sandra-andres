@@ -1,7 +1,7 @@
 import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
-} from "./experience-config.js?v=1.1.1";
+} from "./experience-config.js?v=1.1.2";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
@@ -18,8 +18,8 @@ const pageNames = ["Menú oficial", "Agradecimiento"];
 const pageImages = [
   {
     src: "img/menu/menu-oficial.png",
-    width: 1024,
-    height: 1536,
+    width: 805,
+    height: 1280,
     alt: "Menú oficial de la boda de Sandra Bonilla y Andrés Patiño",
   },
   {
