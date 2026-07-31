@@ -1,0 +1,102 @@
+/* Celular: conserva los controles aprobados y la esquina de avance. */
+@media (max-width: 47.99rem) {
+  html,
+  body {
+    position: fixed;
+    inset: 0;
+    height: var(--app-height, 100dvh);
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .book {
+    width: 100vw;
+    height: var(--app-height, 100dvh);
+    min-height: 0;
+    overflow: hidden;
+    perspective: 1100px;
+  }
+
+  .book-page {
+    height: 100%;
+    min-height: 0;
+    padding: clamp(0.7rem, 2.4vh, 1.35rem) 1rem;
+    overflow: hidden;
+  }
+
+  .ornament {
+    margin-bottom: clamp(0.55rem, 1.6vh, 0.95rem);
+  }
+
+  .thanks__content {
+    transform: none;
+  }
+
+  .thanks .ornament {
+    margin-bottom: clamp(0.75rem, 2vh, 1.4rem);
+  }
+
+  .thanks h2 {
+    margin-bottom: clamp(0.4rem, 1vh, 0.65rem);
+    font-size: clamp(3rem, 10vh, 4.35rem);
+  }
+
+  .thanks__message {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.45rem, 1.2vh, 0.7rem);
+    margin-bottom: clamp(0.75rem, 2vh, 1.25rem);
+    line-height: 1.42;
+    opacity: 1;
+  }
+
+  .thanks__message-primary {
+    font-size: 1.15rem;
+    opacity: 0.82;
+  }
+
+  .thanks__message-secondary {
+    font-size: 1.1rem;
+    opacity: 0.92;
+  }
+
+  .thanks__names,
+  .thanks__date {
+    font-size: clamp(0.58rem, 1.65vh, 0.7rem);
+  }
+}
+
+/* Tablet */
+@media (min-width: 48rem) {
+  .book-page {
+    padding: 4.5rem 3rem;
+  }
+
+}
+
+/* Escritorio */
+@media (min-width: 64rem) {
+  .book {
+    max-width: 90rem;
+    margin: 0 auto;
+    box-shadow: 0 0 5rem oklch(15% 0.02 135 / 0.32);
+  }
+
+}
+
+/* Teléfonos de poca altura */
+@media (max-height: 42rem) {
+  .book-page {
+    padding-top: 1.35rem;
+    padding-bottom: 1.35rem;
+  }
+
+  .ornament {
+    margin-bottom: 0.85rem;
+  }
+
+  .thanks__message {
+    margin-bottom: 1.25rem;
+  }
+}
