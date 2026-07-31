@@ -2,15 +2,15 @@ import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 
 const FLIP_DURATION = 1100;
 const MENU = {
-  src: "img/menu/menu-final-art-v3.png",
+  src: "img/menu/menu-aprobado-final-v4.png?v=4",
   width: 3200,
   height: 5120,
   alt: "Menú oficial de la boda de Sandra Bonilla y Andrés Patiño",
 };
 const THANKS = {
-  src: "img/pages/agradecimiento.png",
-  width: 1170,
-  height: 2532,
+  src: "img/pages/agradecimiento-final-v4.png?v=4",
+  width: 3200,
+  height: 5120,
   alt: "Agradecimiento de Sandra Bonilla y Andrés Patiño",
 };
 const assets = [MENU, THANKS];

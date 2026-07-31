@@ -1,6 +1,8 @@
 :root {
   --ivory: #f7f1e4;
   --green: #243d23;
+  --sheet-width: min(100vw, calc(100vh * 0.625));
+  --sheet-height: min(100vh, calc(100vw * 1.6));
   color-scheme: light;
 }
 
@@ -24,8 +26,8 @@ body {
 
 #rc-stage,
 #rc-book {
-  width: min(100vw, calc(100vh * 0.625));
-  height: min(100vh, calc(100vw * 1.6));
+  width: var(--sheet-width);
+  height: var(--sheet-height);
 }
 
 #rc-stage {
@@ -71,7 +73,7 @@ body {
 .corner-control {
   position: fixed;
   z-index: 920;
-  bottom: 0;
+  bottom: calc((100vh - var(--sheet-height)) / 2 + var(--sheet-height) * 0.04);
   width: 6.25rem;
   height: 6.25rem;
   padding: 0;
@@ -97,7 +99,7 @@ body {
 }
 
 .corner-control--next {
-  right: 0;
+  right: calc((100vw - var(--sheet-width)) / 2 + var(--sheet-width) * 0.04);
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
@@ -111,7 +113,7 @@ body {
 .corner-control--next i { right: 0.55rem; bottom: 0.42rem; }
 
 .corner-control--previous {
-  left: 0;
+  left: calc((100vw - var(--sheet-width)) / 2 + var(--sheet-width) * 0.04);
   clip-path: polygon(0 0, 100% 100%, 0 100%);
 }
 
