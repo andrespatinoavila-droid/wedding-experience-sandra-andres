@@ -2,9 +2,9 @@ import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 
 const FLIP_DURATION = 1100;
 const MENU = {
-  src: "img/menu/menu-aprobado-final-v4.png?v=4",
-  width: 3200,
-  height: 5120,
+  src: "img/menu/MASTER_MENU_v1.0.png?v=1.0",
+  width: 5000,
+  height: 7521,
   alt: "Menú oficial de la boda de Sandra Bonilla y Andrés Patiño",
 };
 const THANKS = {
