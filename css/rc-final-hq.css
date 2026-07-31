@@ -86,6 +86,25 @@ body {
 
 .corner-control[hidden] { display: none; }
 
+.menu-continue-hit-area {
+  position: fixed;
+  z-index: 920;
+  right: calc((100vw - var(--sheet-width)) / 2);
+  bottom: calc((100vh - var(--sheet-height)) / 2);
+  width: calc(var(--sheet-width) * 0.22);
+  height: calc(var(--sheet-height) * 0.16);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  appearance: none;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  cursor: pointer;
+}
+
+.menu-continue-hit-area[hidden] { display: none; }
+
 .corner-control span {
   position: absolute;
   font: 500 0.68rem/1.05 system-ui, sans-serif;
@@ -97,20 +116,6 @@ body {
   position: absolute;
   font: 300 1.5rem/1 system-ui, sans-serif;
 }
-
-.corner-control--next {
-  right: calc((100vw - var(--sheet-width)) / 2 + var(--sheet-width) * 0.04);
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-.corner-control--next span {
-  right: 0.4rem;
-  bottom: 2.9rem;
-  transform: rotate(-45deg);
-  transform-origin: center;
-}
-
-.corner-control--next i { right: 0.55rem; bottom: 0.42rem; }
 
 .corner-control--previous {
   left: calc((100vw - var(--sheet-width)) / 2 + var(--sheet-width) * 0.04);
@@ -127,7 +132,9 @@ body {
 .corner-control--previous i { left: 0.55rem; bottom: 0.42rem; }
 
 body.is-transitioning .corner-control,
-body.is-zoomed .corner-control {
+body.is-zoomed .corner-control,
+body.is-transitioning .menu-continue-hit-area,
+body.is-zoomed .menu-continue-hit-area {
   visibility: hidden;
   pointer-events: none;
 }
