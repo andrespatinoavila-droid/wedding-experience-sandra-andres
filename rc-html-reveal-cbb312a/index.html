@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=3, user-scalable=yes, viewport-fit=cover">
+    <meta name="description" content="Experiencia de boda de Sandra Bonilla y Andrés Patiño.">
+    <title>Sandra & Andrés · Nuestra celebración</title>
+    <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=EB+Garamond:wght@400;500;600&family=Karla:wght@300;400;500;600&family=Playfair+Display:wght@600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css?v=1.1.4">
+    <link rel="stylesheet" href="css/responsive.css?v=1.1.4">
+    <link rel="stylesheet" href="css/menu-native.css?v=native-integration-1">
+    <link rel="stylesheet" href="vendor/photoswipe/photoswipe.css?v=5.4.4">
+    <link rel="stylesheet" href="css/stpageflip.css?v=rc-geometry-sync-1">
+    <script src="vendor/page-flip.browser.js?v=2.0.7" defer></script>
+    <script type="module" src="js/app.js?v=rc-reverse-reveal-1"></script>
+  </head>
+  <body>
+    <main id="wedding-book" class="book" aria-label="Libro digital de nuestra boda">
+      <!-- Página 1: menú oficial -->
+      <section
+        id="page-menu"
+        class="book-page menu-transition-page is-active"
+        data-page="0"
+        aria-label="Acceso al menú oficial de la boda"
+        aria-hidden="false"
+      >
+        <div id="menu-turn-viewport" class="menu-turn-viewport" aria-hidden="true">
+          <div id="menu-turn-surface" class="menu-turn-surface"></div>
+        </div>
+      </section>
+
+      <!-- Página 2: agradecimiento -->
+      <footer
+        id="page-thanks"
+        class="book-page thanks is-next"
+        data-page="1"
+        aria-labelledby="thanks-title"
+        aria-hidden="true"
+        inert
+      >
+        <img
+          class="book-page__image book-page__image--thanks"
+          src="img/pages/agradecimiento.png"
+          alt=""
+          width="1170"
+          height="2532"
+          decoding="async"
+          fetchpriority="high"
+          draggable="false"
+          aria-hidden="true"
+        >
+        <div id="surface-thanks" class="viewer-surface viewer-surface--thanks">
+          <div class="thanks__content page-content">
+            <div class="ornament ornament--light" aria-hidden="true"><span></span><i></i><span></span></div>
+            <h2 id="thanks-title">Gracias</h2>
+            <p class="thanks__message">
+              <span class="thanks__message-primary">Gracias por compartir este momento con nosotros.</span>
+              <span class="thanks__message-secondary">Esperamos que esta noche quede para siempre en sus corazones, así como ustedes quedarán para siempre en el nuestro.</span>
+            </p>
+            <p class="thanks__names">Sandra Bonilla &amp; Andrés Patiño</p>
+            <p class="thanks__date">08 de agosto de 2026</p>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <section
+      id="native-menu-surface"
+      class="native-menu-layer"
+      aria-label="Menú de boda de Sandra Bonilla y Andrés Patiño"
+    ></section>
+
+    <aside
+      id="menu-photo-viewer"
+      class="menu-controls"
+      aria-label="Visor del menú oficial"
+      aria-hidden="true"
+      hidden
+    >
+      <button
+        id="viewer-continue"
+        class="viewer-control viewer-control--continue"
+        type="button"
+        aria-label="Continuar al agradecimiento"
+      >
+        <span>Continuar</span>
+        <i aria-hidden="true">→</i>
+      </button>
+
+    </aside>
+
+    <p id="page-status" class="visually-hidden" aria-live="polite">Menú oficial</p>
+  </body>
+</html>
