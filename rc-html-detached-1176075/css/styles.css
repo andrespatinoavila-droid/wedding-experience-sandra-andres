@@ -1,0 +1,176 @@
+:root {
+  --ivory: oklch(97% 0.015 85);
+  --ivory-deep: oklch(93% 0.022 85);
+  --ink: oklch(24% 0.015 90);
+  --ink-soft: oklch(40% 0.02 90);
+  --olive: oklch(42% 0.045 135);
+  --olive-dark: oklch(30% 0.04 135);
+  --gold: oklch(60% 0.11 75);
+  --gold-light: oklch(70% 0.1 80);
+  --line: oklch(42% 0.045 135 / 0.15);
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans: "Karla", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--olive-dark);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+}
+
+::selection {
+  background: oklch(72% 0.1 80 / 0.35);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.book {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  perspective: 1800px;
+  isolation: isolate;
+}
+
+.book-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 3.5rem 1.75rem;
+  transition: none;
+}
+
+.book-page.is-active {
+  z-index: 5;
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(0) rotateY(0deg);
+  transition-delay: 0s;
+}
+
+.book-page.is-previous {
+  z-index: 3;
+  visibility: hidden;
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
+}
+
+.book-page.is-next {
+  z-index: 3;
+  visibility: hidden;
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
+}
+
+.page-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0 auto 1.45rem;
+}
+
+.ornament span {
+  width: 2rem;
+  height: 1px;
+  background: var(--gold);
+}
+
+.ornament i {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.thanks {
+  text-align: center;
+  background: var(--olive-dark);
+  color: var(--ivory);
+}
+
+.thanks__content {
+  width: min(100%, 25rem);
+}
+
+.ornament--light {
+  margin-bottom: 2rem;
+}
+
+.ornament--light span,
+.ornament--light i {
+  background: var(--gold-light);
+}
+
+.thanks h2 {
+  margin-bottom: 1rem;
+  color: var(--gold-light);
+  font: italic 500 clamp(3.5rem, 17vw, 4.8rem)/1 var(--serif);
+}
+
+.thanks__message {
+  max-width: 21rem;
+  margin-right: auto;
+  margin-bottom: 2.5rem;
+  margin-left: auto;
+  opacity: 0.82;
+  font: italic 400 1rem/1.65 var(--serif);
+}
+
+.thanks__names {
+  margin: 0 0 0.65rem;
+  color: var(--gold-light);
+  font: 500 0.72rem/1.5 var(--sans);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.thanks__date {
+  margin: 0;
+  color: var(--gold-light);
+  font: 500 0.68rem/1.5 var(--sans);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}

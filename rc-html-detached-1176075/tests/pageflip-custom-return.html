@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Prueba aislada · Regreso visual inverso</title>
+    <link rel="stylesheet" href="pageflip-custom-return.css?v=5">
+    <script src="../vendor/page-flip.browser.js?v=2.0.7" defer></script>
+    <script src="pageflip-custom-return.js?v=4" defer></script>
+  </head>
+  <body>
+    <main id="test-stage" aria-label="Prueba aislada del regreso visual">
+      <div id="custom-book">
+        <section class="custom-page">
+          <img
+            src="../img/menu/menu-oficial-hq-v2.png"
+            alt="Menú oficial"
+            width="1610"
+            height="2654"
+            draggable="false"
+          >
+        </section>
+        <section class="custom-page">
+          <img
+            src="../img/pages/agradecimiento.png"
+            alt="Agradecimiento"
+            width="1170"
+            height="2532"
+            draggable="false"
+          >
+        </section>
+      </div>
+    </main>
+
+    <nav aria-label="Controles de la prueba">
+      <button id="custom-previous" type="button" disabled>Regresar</button>
+      <button id="custom-next" type="button">Avanzar</button>
+    </nav>
+
+    <p id="custom-status" aria-live="polite">Menú · listo</p>
+  </body>
+</html>
