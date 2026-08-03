@@ -2,6 +2,7 @@ import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
 } from "./experience-config.js?v=1.1.4";
+import { renderMenuSurface } from "./menu-surface.js?v=salmon-wolford-2";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);
@@ -13,15 +14,21 @@ const pageStatus = document.querySelector("#page-status");
 const menuControls = document.querySelector("#menu-photo-viewer");
 const viewerContinue = document.querySelector("#viewer-continue");
 const bookPageImages = [...document.querySelectorAll(".book-page__image")];
+const nativeMenuSurface = document.querySelector("#native-menu-surface");
+const menuTurnSurface = document.querySelector("#menu-turn-surface");
+
+renderMenuSurface(nativeMenuSurface, {
+  interactive: true,
+  titleId: "native-menu-title",
+});
+renderMenuSurface(menuTurnSurface, {
+  interactive: false,
+  titleId: "turn-menu-title",
+});
 
 const pageNames = ["Menú oficial", "Agradecimiento"];
 const pageImages = [
-  {
-    src: "img/menu/menu-oficial.png",
-    width: 805,
-    height: 1280,
-    alt: "Menú oficial de la boda de Sandra Bonilla y Andrés Patiño",
-  },
+  null,
   {
     src: "img/pages/agradecimiento.png",
     width: 1170,
@@ -31,6 +38,23 @@ const pageImages = [
 ];
 
 const NORMAL_ZOOM_TOLERANCE = 1.02;
+const MENU_GEOMETRY_TOLERANCE = 0.5;
+const MENU_GEOMETRY_SELECTORS = [
+  ".menu-sheet",
+  ".menu-header",
+  ".badge",
+  ".menu-sections",
+  ".section-heading",
+  ".dish-grid",
+  ".dish-card",
+  ".dish-icon",
+  ".dish-photo",
+  ".dish-photo img",
+  ".dish-copy",
+  ".dish-copy h3",
+  ".dish-copy p",
+  ".menu-footer",
+];
 
 let pageFlip = null;
 let pageFlipInputSuspended = false;
@@ -41,6 +65,16 @@ let bookImagesReady = false;
 let pendingPageIndex = null;
 let pageActivationFrame = null;
 let deferredViewportSync = false;
+let activeTouchCount = 0;
+let nativeGesturePending = false;
+let nativeZoomReleaseFrame = null;
+let menuScrollY = 0;
+
+function waitForNextPaint() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+  });
+}
 
 async function decodeBookImage(image) {
   if (!image.complete) {
@@ -64,13 +98,38 @@ async function decodeBookImage(image) {
 }
 
 async function preloadBookImages() {
-  await Promise.all(bookPageImages.map(decodeBookImage));
+  const menuImages = [
+    ...nativeMenuSurface.querySelectorAll("img"),
+    ...menuTurnSurface.querySelectorAll("img"),
+  ];
+
+  await Promise.all([...bookPageImages, ...menuImages].map(decodeBookImage));
+  await document.fonts?.ready;
   bookImagesReady = true;
   document.documentElement.classList.add("book-images-ready");
 }
 
+async function waitForCurrentMenuResources() {
+  const currentImages = [
+    ...nativeMenuSurface.querySelectorAll("img"),
+    ...menuTurnSurface.querySelectorAll("img"),
+  ];
+
+  await Promise.all(currentImages.map(decodeBookImage));
+  await document.fonts?.ready;
+}
+
+async function prepareMenuTurnGeometry() {
+  const visibleRect = nativeMenuSurface.getBoundingClientRect();
+  book.style.setProperty("--menu-sync-width", `${visibleRect.width}px`);
+  pageFlip.update();
+  await waitForNextPaint();
+}
+
 function setAppHeight(options = {}) {
   const force = options?.force === true;
+
+  if (!force && isNativeZoomed()) return;
 
   if (transitionInProgress && !force) {
     deferredViewportSync = true;
@@ -105,8 +164,63 @@ function isViewerZoomed() {
   return slide.currZoomLevel > slide.zoomLevels.initial * NORMAL_ZOOM_TOLERANCE;
 }
 
+function getNativeScale() {
+  return Number(window.visualViewport?.scale) || 1;
+}
+
+function isNativeZoomed() {
+  return getNativeScale() > NORMAL_ZOOM_TOLERANCE;
+}
+
+function isAnyZoomed() {
+  return isViewerZoomed() || isNativeZoomed() || nativeGesturePending;
+}
+
+function setNativeZoomActive(active) {
+  document.body.classList.toggle("native-zoom-active", active);
+  document.body.classList.toggle("is-zoomed", active || isViewerZoomed());
+  book.setAttribute("aria-disabled", String(active || transitionInProgress));
+
+  if (active) suspendPageFlipInput();
+  else resumePageFlipInput();
+}
+
+function cancelNativeZoomRelease() {
+  if (nativeZoomReleaseFrame === null) return;
+  window.cancelAnimationFrame(nativeZoomReleaseFrame);
+  nativeZoomReleaseFrame = null;
+}
+
+function scheduleNativeZoomRelease() {
+  cancelNativeZoomRelease();
+  nativeZoomReleaseFrame = window.requestAnimationFrame(() => {
+    nativeZoomReleaseFrame = window.requestAnimationFrame(() => {
+      nativeZoomReleaseFrame = null;
+      if (activeTouchCount > 0 || isNativeZoomed()) return;
+
+      nativeGesturePending = false;
+      setNativeZoomActive(false);
+      setAppHeight({ force: true });
+    });
+  });
+}
+
+function syncNativeZoomState() {
+  if (
+    isNativeZoomed() ||
+    activeTouchCount >= 2 ||
+    (nativeGesturePending && activeTouchCount > 0)
+  ) {
+    cancelNativeZoomRelease();
+    setNativeZoomActive(true);
+    return;
+  }
+
+  scheduleNativeZoomRelease();
+}
+
 function syncZoomState() {
-  const zoomed = isViewerZoomed();
+  const zoomed = isAnyZoomed();
   document.body.classList.toggle("is-zoomed", zoomed);
   book.setAttribute("aria-disabled", String(zoomed || transitionInProgress));
 
@@ -115,6 +229,8 @@ function syncZoomState() {
 }
 
 function configurePhotoSwipe(pageIndex) {
+  if (!pageImages[pageIndex]) return null;
+
   const viewer = new PhotoSwipe({
     dataSource: [pageImages[pageIndex]],
     index: 0,
@@ -127,7 +243,20 @@ function configurePhotoSwipe(pageIndex) {
   viewer.on("zoomPanUpdate", syncZoomState);
   viewer.on("change", syncZoomState);
   viewer.on("destroy", () => {
-    if (photoSwipe === viewer) photoSwipe = null;
+    if (photoSwipe !== viewer) return;
+
+    photoSwipe = null;
+    if (transitionInProgress) return;
+
+    document.body.classList.remove(
+      "is-zoomed",
+      "viewer-active",
+      "menu-viewer-active"
+    );
+    book.setAttribute("aria-hidden", "false");
+    book.setAttribute("aria-disabled", "false");
+    updateControls(Number(document.body.dataset.currentPage) || 0);
+    resumePageFlipInput();
   });
 
   return viewer;
@@ -137,6 +266,7 @@ function openPhotoViewer(pageIndex) {
   destroyPhotoViewer();
   document.body.dataset.currentPage = String(pageIndex);
   document.body.classList.add("viewer-active");
+  document.body.classList.remove("menu-transition-active");
   document.body.classList.toggle("menu-viewer-active", pageIndex === 0);
   book.setAttribute("aria-hidden", "true");
   menuControls.hidden = pageIndex !== 0;
@@ -148,12 +278,29 @@ function openPhotoViewer(pageIndex) {
   document.documentElement.classList.add("app-ready");
 }
 
+function openHtmlMenu() {
+  destroyPhotoViewer();
+  document.body.dataset.currentPage = "0";
+  document.body.classList.add("html-menu-active");
+  document.body.classList.remove("menu-transition-active");
+  document.documentElement.classList.add("html-menu-active");
+  book.setAttribute("aria-hidden", "false");
+  menuControls.hidden = false;
+  menuControls.setAttribute("aria-hidden", "false");
+  document.documentElement.classList.add("app-ready");
+  window.scrollTo(0, menuScrollY);
+  syncZoomState();
+}
+
 function destroyPhotoViewer() {
   document.body.classList.remove(
     "is-zoomed",
     "viewer-active",
-    "menu-viewer-active"
+    "menu-viewer-active",
+    "html-menu-active",
+    "native-zoom-active"
   );
+  document.documentElement.classList.remove("html-menu-active");
   book.setAttribute("aria-hidden", "false");
   book.setAttribute("aria-disabled", String(transitionInProgress));
 
@@ -205,7 +352,8 @@ function updatePageStatus(pageIndex) {
   book.dataset.currentPage = String(safeIndex);
   document.body.dataset.currentPage = String(safeIndex);
   updateControls(safeIndex);
-  openPhotoViewer(safeIndex);
+  if (safeIndex === 0) openHtmlMenu();
+  else openPhotoViewer(safeIndex);
 }
 
 function schedulePageActivation(pageIndex) {
@@ -225,20 +373,125 @@ function schedulePageActivation(pageIndex) {
   });
 }
 
-function beginPageTransition(action) {
+function syncMenuRepresentations() {
+  menuScrollY = Math.max(0, window.scrollY || 0);
+  menuTurnSurface.style.setProperty("--menu-turn-offset", `${-menuScrollY}px`);
+
+  const visibleRect = nativeMenuSurface.getBoundingClientRect();
+  const initialTurnRect = menuTurnSurface.getBoundingClientRect();
+  const pageTopCorrection = initialTurnRect.top - visibleRect.top;
+  menuTurnSurface.style.setProperty(
+    "--menu-turn-offset",
+    `${-menuScrollY - pageTopCorrection}px`
+  );
+
+  const bookRect = book.getBoundingClientRect();
+  const turnRect = menuTurnSurface.getBoundingClientRect();
+  const comparisons = [];
+  let maxDelta = 0;
+  let structureMatches = true;
+
+  MENU_GEOMETRY_SELECTORS.forEach((selector) => {
+    const visibleElements = [...nativeMenuSurface.querySelectorAll(selector)];
+    const turnElements = [...menuTurnSurface.querySelectorAll(selector)];
+
+    if (visibleElements.length !== turnElements.length) {
+      structureMatches = false;
+      comparisons.push({
+        selector,
+        visibleCount: visibleElements.length,
+        turnCount: turnElements.length,
+      });
+      return;
+    }
+
+    visibleElements.forEach((visibleElement, index) => {
+      const turnElement = turnElements[index];
+      const visibleElementRect = visibleElement.getBoundingClientRect();
+      const turnElementRect = turnElement.getBoundingClientRect();
+      const deltas = {
+        left: Math.abs(visibleElementRect.left - turnElementRect.left),
+        top: Math.abs(visibleElementRect.top - turnElementRect.top),
+        width: Math.abs(visibleElementRect.width - turnElementRect.width),
+        height: Math.abs(visibleElementRect.height - turnElementRect.height),
+      };
+      const elementMaxDelta = Math.max(...Object.values(deltas));
+      maxDelta = Math.max(maxDelta, elementMaxDelta);
+
+      if (elementMaxDelta > MENU_GEOMETRY_TOLERANCE) {
+        comparisons.push({ selector, index, deltas });
+      }
+    });
+  });
+
+  const geometry = {
+    visible: visibleRect.toJSON(),
+    book: bookRect.toJSON(),
+    turn: turnRect.toJSON(),
+    widthDelta: Math.abs(visibleRect.width - bookRect.width),
+    leftDelta: Math.abs(visibleRect.left - bookRect.left),
+    topDelta: Math.abs(visibleRect.top - turnRect.top),
+    maxDelta,
+    structureMatches,
+    mismatches: comparisons,
+  };
+
+  window.__weddingMenuGeometry = geometry;
+  if (new URLSearchParams(window.location.search).has("debug")) {
+    document.documentElement.dataset.menuGeometry = JSON.stringify({
+      widthDelta: geometry.widthDelta,
+      leftDelta: geometry.leftDelta,
+      topDelta: geometry.topDelta,
+      maxDelta: geometry.maxDelta,
+      structureMatches: geometry.structureMatches,
+      mismatchCount: geometry.mismatches.length,
+      mismatches: geometry.mismatches.slice(0, 12),
+      visible: geometry.visible,
+      book: geometry.book,
+      turn: geometry.turn,
+    });
+  }
+  return (
+    geometry.widthDelta <= MENU_GEOMETRY_TOLERANCE &&
+    geometry.leftDelta <= MENU_GEOMETRY_TOLERANCE &&
+    geometry.topDelta <= MENU_GEOMETRY_TOLERANCE &&
+    geometry.structureMatches &&
+    geometry.maxDelta <= MENU_GEOMETRY_TOLERANCE
+  );
+}
+
+async function beginPageTransition(action) {
   if (
     !pageFlip ||
     !bookImagesReady ||
     transitionInProgress ||
-    isViewerZoomed()
+    isAnyZoomed() ||
+    activeTouchCount > 0 ||
+    getNativeScale() > NORMAL_ZOOM_TOLERANCE
   ) {
     return;
   }
+
   transitionInProgress = true;
   book.setAttribute("aria-disabled", "true");
   if (EXPERIENCE_CONFIG.controlsOnly) suspendPageFlipInput();
 
+  document.body.classList.add("menu-book-preparing");
+  await waitForCurrentMenuResources();
+  await prepareMenuTurnGeometry();
+
+  if (!syncMenuRepresentations()) {
+    console.error("Las representaciones del menú no están sincronizadas.");
+    document.body.classList.remove("menu-book-preparing");
+    transitionInProgress = false;
+    book.setAttribute("aria-disabled", "false");
+    resumePageFlipInput();
+    return;
+  }
+
   const execute = () => {
+    document.body.classList.remove("menu-book-preparing");
+    document.body.classList.add("menu-transition-active");
     destroyPhotoViewer();
     menuControls.hidden = true;
     action();
@@ -259,6 +512,281 @@ function flipFromBottom(direction) {
   });
 }
 
+function createTemporaryThanksPage() {
+  const page = document.createElement("section");
+  const image = document.createElement("img");
+  const asset = pageImages[1];
+
+  page.className = "reverse-page";
+  image.src = asset.src;
+  image.alt = "";
+  image.width = asset.width;
+  image.height = asset.height;
+  image.draggable = false;
+  page.append(image);
+
+  return {
+    page,
+    ready: decodeBookImage(image),
+  };
+}
+
+function createTemporaryMenuPage() {
+  const page = document.createElement("section");
+  const viewport = document.createElement("div");
+  const menuClone = document.createElement("div");
+
+  page.className = "reverse-page";
+  viewport.className = "reverse-page__menu";
+  viewport.setAttribute("aria-hidden", "true");
+  menuClone.className = menuTurnSurface.className;
+  menuClone.dataset.interactive = "false";
+  menuClone.innerHTML = nativeMenuSurface.innerHTML;
+  menuClone.querySelectorAll("[id]").forEach((element) => {
+    element.removeAttribute("id");
+  });
+  viewport.append(menuClone);
+  page.append(viewport);
+
+  return {
+    page,
+    menuClone,
+    ready: Promise.all(
+      [...menuClone.querySelectorAll("img")].map(decodeBookImage)
+    ),
+  };
+}
+
+async function prepareReverseTurnGeometry() {
+  await waitForCurrentMenuResources();
+  const finalMenuRect = nativeMenuSurface.getBoundingClientRect();
+  book.style.setProperty("--menu-sync-width", `${finalMenuRect.width}px`);
+  pageFlip.update();
+  await waitForNextPaint();
+}
+
+function alignReverseMenu(menuClone, temporaryFlip) {
+  const topCorrection = temporaryFlip.getBoundsRect().top;
+  menuClone.style.setProperty(
+    "--menu-turn-offset",
+    `${-menuScrollY - topCorrection}px`
+  );
+}
+
+function compareMenuElementGeometry(sourceRoot, targetRoot) {
+  const sourceRootRect = sourceRoot.getBoundingClientRect();
+  const targetRootRect = targetRoot.getBoundingClientRect();
+  const mismatches = [];
+  let maxDelta = 0;
+  let structureMatches = true;
+
+  MENU_GEOMETRY_SELECTORS.forEach((selector) => {
+    const sourceElements = [...sourceRoot.querySelectorAll(selector)];
+    const targetElements = [...targetRoot.querySelectorAll(selector)];
+
+    if (sourceElements.length !== targetElements.length) {
+      structureMatches = false;
+      mismatches.push({
+        selector,
+        sourceCount: sourceElements.length,
+        targetCount: targetElements.length,
+      });
+      return;
+    }
+
+    sourceElements.forEach((sourceElement, index) => {
+      const targetElement = targetElements[index];
+      const sourceRect = sourceElement.getBoundingClientRect();
+      const targetRect = targetElement.getBoundingClientRect();
+      const sourceStyle = window.getComputedStyle(sourceElement);
+      const targetStyle = window.getComputedStyle(targetElement);
+      const deltas = {
+        left: Math.abs(
+          sourceRect.left - sourceRootRect.left -
+            (targetRect.left - targetRootRect.left)
+        ),
+        top: Math.abs(
+          sourceRect.top - sourceRootRect.top -
+            (targetRect.top - targetRootRect.top)
+        ),
+        width: Math.abs(sourceRect.width - targetRect.width),
+        height: Math.abs(sourceRect.height - targetRect.height),
+      };
+      const styleMatches =
+        sourceStyle.objectFit === targetStyle.objectFit &&
+        sourceStyle.objectPosition === targetStyle.objectPosition &&
+        sourceStyle.transform === targetStyle.transform;
+      const elementMaxDelta = Math.max(...Object.values(deltas));
+      maxDelta = Math.max(maxDelta, elementMaxDelta);
+
+      if (elementMaxDelta > MENU_GEOMETRY_TOLERANCE || !styleMatches) {
+        mismatches.push({
+          selector,
+          index,
+          deltas,
+          styles: {
+            source: {
+              objectFit: sourceStyle.objectFit,
+              objectPosition: sourceStyle.objectPosition,
+              transform: sourceStyle.transform,
+            },
+            target: {
+              objectFit: targetStyle.objectFit,
+              objectPosition: targetStyle.objectPosition,
+              transform: targetStyle.transform,
+            },
+          },
+        });
+      }
+    });
+  });
+
+  const geometry = {
+    maxDelta,
+    structureMatches,
+    mismatchCount: mismatches.length,
+    mismatches,
+  };
+  window.__weddingReverseMenuGeometry = geometry;
+  if (new URLSearchParams(window.location.search).has("debug")) {
+    document.documentElement.dataset.reverseGeometryMax =
+      maxDelta.toFixed(3);
+    document.documentElement.dataset.reverseGeometryMismatches = String(
+      mismatches.length
+    );
+    console.info("Geometría inversa validada:", JSON.stringify(geometry));
+  }
+  return geometry;
+}
+
+async function validateReverseMenuClone(menuClone) {
+  const viewport = menuClone.parentElement;
+  const probe = document.createElement("div");
+  const sourceRect = nativeMenuSurface.getBoundingClientRect();
+
+  Object.assign(probe.style, {
+    position: "fixed",
+    left: "-10000px",
+    top: "0",
+    width: `${sourceRect.width}px`,
+    visibility: "hidden",
+    pointerEvents: "none",
+  });
+  probe.append(menuClone);
+  document.body.append(probe);
+  menuClone.style.setProperty("--menu-turn-offset", "0px");
+  await waitForNextPaint();
+
+  const geometry = compareMenuElementGeometry(nativeMenuSurface, menuClone);
+
+  menuClone.style.removeProperty("--menu-turn-offset");
+  viewport.append(menuClone);
+  probe.remove();
+  return geometry;
+}
+
+async function createApprovedReverseEngine() {
+  const overlay = document.createElement("div");
+  const mirror = document.createElement("div");
+  const temporaryBook = document.createElement("div");
+  const thanksPage = createTemporaryThanksPage();
+  const menuPage = createTemporaryMenuPage();
+
+  overlay.className = "reverse-engine";
+  mirror.className = "reverse-engine__mirror";
+  temporaryBook.className = "reverse-engine__book";
+  temporaryBook.append(thanksPage.page, menuPage.page);
+  mirror.append(temporaryBook);
+  overlay.append(mirror);
+
+  const bounds = book.getBoundingClientRect();
+  Object.assign(overlay.style, {
+    left: `${bounds.left}px`,
+    top: `${bounds.top}px`,
+    width: `${bounds.width}px`,
+    height: `${bounds.height}px`,
+  });
+  document.body.append(overlay);
+  await Promise.all([thanksPage.ready, menuPage.ready]);
+
+  const reverseGeometry = await validateReverseMenuClone(menuPage.menuClone);
+  if (
+    !reverseGeometry.structureMatches ||
+    reverseGeometry.maxDelta > MENU_GEOMETRY_TOLERANCE ||
+    reverseGeometry.mismatchCount > 0
+  ) {
+    if (new URLSearchParams(window.location.search).has("debug")) {
+      console.error("Geometría inversa:", JSON.stringify(reverseGeometry));
+    }
+    overlay.remove();
+    throw new Error(
+      `La geometría del menú inverso excede ${MENU_GEOMETRY_TOLERANCE}px.`
+    );
+  }
+
+  const temporaryFlip = new window.St.PageFlip(temporaryBook, {
+    width: Math.min(EXPERIENCE_CONFIG.pageFlip.maxWidth, bounds.width),
+    height: bounds.height,
+    ...EXPERIENCE_CONFIG.pageFlip,
+    startPage: 0,
+    useMouseEvents: false,
+    showPageCorners: false,
+  });
+  temporaryFlip.loadFromHTML([thanksPage.page, menuPage.page]);
+  await waitForNextPaint();
+  alignReverseMenu(menuPage.menuClone, temporaryFlip);
+  await waitForNextPaint();
+
+  return { overlay, temporaryFlip, menuClone: menuPage.menuClone };
+}
+
+async function runApprovedReverseTransition() {
+  if (
+    !pageFlip ||
+    !bookImagesReady ||
+    transitionInProgress ||
+    isViewerZoomed() ||
+    Number(document.body.dataset.currentPage) !== 1
+  ) {
+    return;
+  }
+
+  transitionInProgress = true;
+  document.body.classList.add("is-reversing");
+  book.setAttribute("aria-disabled", "true");
+  if (EXPERIENCE_CONFIG.controlsOnly) suspendPageFlipInput();
+
+  let reverseEngine = null;
+
+  try {
+    await prepareReverseTurnGeometry();
+    reverseEngine = await createApprovedReverseEngine();
+    destroyPhotoViewer();
+    menuControls.hidden = true;
+    pageFlip.turnToPrevPage();
+    await waitForNextPaint();
+
+    await new Promise((resolve) => {
+      reverseEngine.temporaryFlip.on("flip", (event) => {
+        if (Number(event.data) === 1) resolve();
+      });
+      reverseEngine.temporaryFlip.flipNext("bottom");
+    });
+  } finally {
+    pendingPageIndex = null;
+    document.documentElement.classList.add("html-menu-active");
+    document.body.classList.add("html-menu-active");
+    window.scrollTo(0, menuScrollY);
+    await waitForCurrentMenuResources();
+    await waitForNextPaint();
+    await waitForNextPaint();
+    reverseEngine?.temporaryFlip.destroy();
+    reverseEngine?.overlay.remove();
+    document.body.classList.remove("is-reversing");
+    updatePageStatus(0);
+  }
+}
+
 function initializeControls() {
   previousControl = document.createElement("button");
   previousControl.className = "book-control book-control--previous";
@@ -269,7 +797,7 @@ function initializeControls() {
   previousControl.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    beginPageTransition(() => flipFromBottom("backward"));
+    runApprovedReverseTransition();
   });
   document.body.append(previousControl);
 
@@ -289,9 +817,13 @@ function initializePageFlip() {
 
   preparePages();
   const initialBookRect = book.getBoundingClientRect();
+  const initialPageWidth = Math.min(
+    EXPERIENCE_CONFIG.pageFlip.maxWidth,
+    initialBookRect.width
+  );
 
   pageFlip = new window.St.PageFlip(book, {
-    width: initialBookRect.width,
+    width: initialPageWidth,
     height: initialBookRect.height,
     ...EXPERIENCE_CONFIG.pageFlip,
   });
@@ -323,9 +855,88 @@ function initializePageFlip() {
 setAppHeight();
 window.addEventListener("orientationchange", setAppHeight, { passive: true });
 window.addEventListener("resize", setAppHeight, { passive: true });
+window.addEventListener("orientationchange", syncNativeZoomState, {
+  passive: true,
+});
+window.addEventListener("resize", syncNativeZoomState, { passive: true });
 window.visualViewport?.addEventListener("resize", setAppHeight, {
   passive: true,
 });
+window.visualViewport?.addEventListener("resize", syncNativeZoomState, {
+  passive: true,
+});
+window.visualViewport?.addEventListener("scroll", syncNativeZoomState, {
+  passive: true,
+});
+
+nativeMenuSurface.addEventListener(
+  "touchstart",
+  (event) => {
+    activeTouchCount = event.touches.length;
+    if (activeTouchCount < 2) return;
+
+    nativeGesturePending = true;
+    setNativeZoomActive(true);
+    event.stopPropagation();
+  },
+  { capture: true, passive: true }
+);
+
+nativeMenuSurface.addEventListener(
+  "touchmove",
+  (event) => {
+    activeTouchCount = event.touches.length;
+    if (!nativeGesturePending && !isNativeZoomed()) return;
+
+    setNativeZoomActive(true);
+    event.stopPropagation();
+  },
+  { capture: true, passive: true }
+);
+
+const finishNativeTouch = (event) => {
+  activeTouchCount = event.touches?.length || 0;
+  syncNativeZoomState();
+};
+
+nativeMenuSurface.addEventListener("touchend", finishNativeTouch, {
+  capture: true,
+  passive: true,
+});
+nativeMenuSurface.addEventListener("touchcancel", finishNativeTouch, {
+  capture: true,
+  passive: true,
+});
+nativeMenuSurface.addEventListener(
+  "gesturestart",
+  (event) => {
+    nativeGesturePending = true;
+    setNativeZoomActive(true);
+    event.stopPropagation();
+  },
+  { capture: true, passive: true }
+);
+nativeMenuSurface.addEventListener("gesturechange", syncNativeZoomState, {
+  capture: true,
+  passive: true,
+});
+nativeMenuSurface.addEventListener("gestureend", scheduleNativeZoomRelease, {
+  capture: true,
+  passive: true,
+});
+
+window.addEventListener(
+  "scroll",
+  () => {
+    if (
+      document.documentElement.classList.contains("html-menu-active") &&
+      !isNativeZoomed()
+    ) {
+      menuScrollY = Math.max(0, window.scrollY || 0);
+    }
+  },
+  { passive: true }
+);
 
 await preloadBookImages();
 initializePageFlip();

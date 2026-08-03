@@ -37,8 +37,8 @@
 }
 
 .book.stf__parent {
-  width: 100% !important;
-  max-width: 32.5rem !important;
+  width: var(--menu-sync-width, 100%) !important;
+  max-width: var(--menu-sync-width, 520px) !important;
   height: var(--app-height, 100dvh);
   min-height: 0 !important;
   margin: 0 auto;
@@ -95,6 +95,141 @@ html:not(.app-ready) body {
 
 .book-page__image--menu {
   background: var(--ivory);
+}
+
+.menu-turn-viewport {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ivory);
+  pointer-events: none;
+}
+
+.menu-turn-surface {
+  width: 100%;
+  min-height: 100%;
+  transform: translateY(var(--menu-turn-offset, 0));
+  transform-origin: 0 0;
+}
+
+.native-menu-layer {
+  position: relative;
+  z-index: 800;
+  display: block;
+  width: min(100%, 520px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  overflow: visible;
+  background: var(--ivory);
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+html.html-menu-active,
+html.html-menu-active body {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+  overscroll-behavior: auto;
+  background: var(--ivory);
+}
+
+html.html-menu-active .book {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.html-menu-active body.menu-book-preparing .book {
+  display: block !important;
+}
+
+html:not(.html-menu-active) .native-menu-layer,
+body.menu-transition-active .native-menu-layer,
+body.viewer-active .native-menu-layer,
+body.is-reversing .native-menu-layer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.native-zoom-active .viewer-control,
+body.native-zoom-active .book-control {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.reverse-engine {
+  position: fixed;
+  z-index: 890;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.reverse-engine__mirror,
+.reverse-engine__book {
+  width: 100%;
+  height: 100%;
+}
+
+.reverse-engine__book .stf__wrapper {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.reverse-engine__book .stf__block {
+  overflow: hidden;
+}
+
+.reverse-engine__mirror {
+  transform: scaleX(-1);
+}
+
+.reverse-page {
+  overflow: hidden;
+  border: 0;
+  outline: 0;
+  background: var(--ivory);
+}
+
+.reverse-page > img,
+.reverse-page__menu {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  transform: scaleX(-1);
+}
+
+.reverse-page > img {
+  object-fit: contain;
+  object-position: 50% 50%;
+}
+
+.reverse-page__menu {
+  overflow: hidden;
+  background: var(--ivory);
+  transform-origin: 50% 50%;
+}
+
+body.is-reversing .book-control,
+body.is-reversing .menu-controls {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .pswp__img {
@@ -354,13 +489,17 @@ body[data-current-page="1"] .book-control::before {
 
 @media (min-width: 48rem) {
   .book.stf__parent {
-    max-width: 38rem !important;
+    max-width: 520px !important;
   }
 }
 
 @media (min-width: 64rem) {
   html.experience-desktop .book.stf__parent {
-    max-width: 32.5rem !important;
+    max-width: 520px !important;
+  }
+
+  html.experience-desktop .native-menu-layer {
+    pointer-events: none;
   }
 
   html.experience-desktop .book-control {
