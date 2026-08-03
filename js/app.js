@@ -2,7 +2,7 @@ import PhotoSwipe from "../vendor/photoswipe/photoswipe.esm.min.js";
 import {
   detectExperienceConfig,
 } from "./experience-config.js?v=1.1.4";
-import { renderMenuSurface } from "./menu-surface.js?v=salmon-wolford-2";
+import { renderMenuSurface } from "./menu-surface.js?v=options-11";
 
 const EXPERIENCE_CONFIG = detectExperienceConfig();
 document.documentElement.classList.add(EXPERIENCE_CONFIG.className);

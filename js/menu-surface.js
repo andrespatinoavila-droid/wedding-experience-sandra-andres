@@ -75,13 +75,13 @@ export function renderMenuSurface(container, options = {}) {
   container.dataset.interactive = String(interactive);
   container.innerHTML = `
     <article class="menu-sheet" aria-labelledby="${titleId}">
-      <aside class="badge" aria-label="Nueve opciones">
+      <aside class="badge" aria-label="Once opciones">
         <svg class="badge__frame" viewBox="0 0 100 150" preserveAspectRatio="none" aria-hidden="true">
           <path d="M1 1H99V121.5L50 149 1 121.5Z" />
           <path d="M4 4H96V119.6L50 145.4 4 119.6Z" />
         </svg>
         <i class="badge__heart" aria-hidden="true">♡</i>
-        <div class="badge__number"><strong>9</strong><small>OPCIONES</small></div>
+        <div class="badge__number"><strong>11</strong><small>OPCIONES</small></div>
         <span>opciones para<br>llenar de más<br>motivos esta<br>celebración</span>
         <svg class="badge__ornament" viewBox="0 0 100 34" aria-hidden="true">
           <path class="badge__ornament-branch" d="M6 24C23 23 34 18 44 10M94 24C77 23 66 18 56 10" />
