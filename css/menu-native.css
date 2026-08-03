@@ -258,20 +258,26 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
+  width: 82%;
+  margin-right: auto;
+  margin-left: auto;
   margin-top: clamp(0.32rem, 0.9vw, 0.58rem);
-  gap: 0.08em;
+  gap: 0.06em;
+  white-space: nowrap;
 }
 
 .badge__number strong {
   color: #d1a04a;
-  font: 500 clamp(1.47rem, 4.55vw, 2.62rem)/0.9 var(--display);
+  flex: 0 0 auto;
+  font: 500 clamp(1.22rem, 3.62vw, 2.08rem)/0.9 var(--display);
   text-shadow: 0 0.01em rgb(255 238 190 / 18%);
 }
 
 .badge__number small {
   color: var(--paper);
-  font: 500 0.54em/1 var(--display);
-  letter-spacing: 0.015em;
+  flex: 0 0 auto;
+  font: 500 clamp(0.39rem, 1.08vw, 0.62rem)/1 var(--display);
+  letter-spacing: 0.01em;
 }
 
 .badge > span {
