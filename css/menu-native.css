@@ -518,7 +518,7 @@
   padding: clamp(0.55rem, 1.5vw, 0.92rem) clamp(3rem, 10vw, 7.5rem);
   background: linear-gradient(90deg, #0d3225, var(--olive) 48%, #0d3225);
   color: var(--gold-light);
-  font: 500 clamp(0.55rem, 1.45vw, 0.88rem)/1.12 var(--display);
+  font: 500 clamp(0.55rem, 1.45vw, 0.88rem)/1.12 "Cinzel", Georgia, serif;
   letter-spacing: 0.11em;
   text-align: center;
   text-transform: uppercase;
