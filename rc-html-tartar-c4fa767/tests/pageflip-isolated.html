@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Prueba aislada · StPageFlip</title>
+    <link rel="stylesheet" href="pageflip-isolated.css?v=rc2">
+    <script src="../vendor/page-flip.browser.js?v=2.0.7" defer></script>
+    <script src="pageflip-isolated.js?v=rc2" defer></script>
+  </head>
+  <body>
+    <main id="isolated-book" aria-label="Prueba aislada del libro">
+      <section class="isolated-page">
+        <img
+          src="../img/menu/menu-oficial.png"
+          alt="Menú oficial"
+          width="805"
+          height="1280"
+          draggable="false"
+        >
+      </section>
+      <section class="isolated-page">
+        <img
+          src="../img/pages/agradecimiento.png"
+          alt="Agradecimiento"
+          width="1170"
+          height="2532"
+          draggable="false"
+        >
+      </section>
+    </main>
+
+    <nav aria-label="Controles de prueba">
+      <button id="previous" type="button" disabled>Regresar</button>
+      <button id="next" type="button">Siguiente</button>
+    </nav>
+
+    <p id="test-status" aria-live="polite">Página 1 de 2</p>
+  </body>
+</html>
